@@ -46,6 +46,44 @@ window.alert = function(msg) {
   window.showToast(str, 'info');
 };
 
+// Custom In-App Confirmation Modal (Never blocked by Brave/Chrome dialog suppression)
+window.showConfirmDialog = function({ title, message, confirmText = 'Yes, Delete', confirmColor = '#DC2626', onConfirm }) {
+  const overlay = document.getElementById('workflow-modal-overlay');
+  const content = document.getElementById('workflow-modal-content');
+  if (!overlay || !content) {
+    if (confirm(message)) onConfirm();
+    return;
+  }
+
+  content.innerHTML = `
+    <div style="padding: 24px 20px; text-align: center;">
+      <div style="width: 58px; height: 58px; border-radius: 50%; background: #FEE2E2; color: #DC2626; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 16px auto;">
+        <i class="fas fa-trash-alt"></i>
+      </div>
+      <h3 style="font-size: 19px; font-weight: 800; color: #0F172A; margin: 0 0 10px 0;">${title}</h3>
+      <p style="font-size: 13.5px; font-weight: 600; color: #475569; margin: 0 0 24px 0; line-height: 1.5;">${message}</p>
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <button type="button" class="ios-btn" style="background: #F1F5F9; color: #334155; font-size: 13.5px; font-weight: 800; padding: 10px 22px; border-radius: 10px;" onclick="window.closeModal()">
+          Cancel
+        </button>
+        <button type="button" id="confirm-dialog-action-btn" class="ios-btn" style="background: ${confirmColor}; color: #FFF; font-size: 13.5px; font-weight: 800; padding: 10px 24px; border-radius: 10px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);">
+          ${confirmText}
+        </button>
+      </div>
+    </div>
+  `;
+  overlay.style.display = 'flex';
+  const actionBtn = document.getElementById('confirm-dialog-action-btn');
+  if (actionBtn) {
+    actionBtn.onclick = async () => {
+      window.closeModal();
+      if (typeof onConfirm === 'function') {
+        await onConfirm();
+      }
+    };
+  }
+};
+
 // Prevent unhandled promise rejections or script errors from showing debug toast overlays
 window.addEventListener('unhandledrejection', (event) => {
   console.debug('[Handled Promise Notice]:', event.reason);
@@ -986,22 +1024,28 @@ window.handleFolderUpload = async function(folderId, event, customInputId, templ
 
 window.handleDeleteUploadedFile = async function(recId, filename, folderId, templateFileId) {
   const cleanName = decodeURIComponent(filename);
-  if (!confirm(`Are you sure you want to remove response "${cleanName}"?`)) return;
-  try {
-    const deleteTarget = templateFileId || encodeURIComponent(cleanName);
-    const res = await fetch(`/api/yearwise-records/${recId}/files/${deleteTarget}`, {
-      method: 'DELETE'
-    }).then(r => r.json());
-    if (res.success) {
-      showToast('Response file removed.', 'info');
-      await loadInitialData();
-      renderActiveView();
-    } else {
-      showToast(res.error || 'Failed to remove file.', 'error');
+  window.showConfirmDialog({
+    title: `Remove "${cleanName}"?`,
+    message: `Are you sure you want to remove response file "${cleanName}"? You can re-upload your revised file at any time.`,
+    confirmText: 'Yes, Remove File',
+    onConfirm: async () => {
+      try {
+        const deleteTarget = templateFileId || encodeURIComponent(cleanName);
+        const res = await fetch(`/api/yearwise-records/${recId}/files/${deleteTarget}`, {
+          method: 'DELETE'
+        }).then(r => r.json());
+        if (res.success) {
+          showToast('Response file removed.', 'info');
+          await loadInitialData();
+          renderActiveView();
+        } else {
+          showToast(res.error || 'Failed to remove file.', 'error');
+        }
+      } catch (err) {
+        showToast('Failed to remove file.', 'error');
+      }
     }
-  } catch (err) {
-    showToast('Failed to remove file.', 'error');
-  }
+  });
 };
 
 window.submitFolderToHOD = async function(folderId) {
@@ -1777,25 +1821,33 @@ window.handleCreateFormatFolder = async function() {
 };
 
 window.handleDeleteFormatFolder = async function(folderId) {
-  if (!confirm('Are you sure you want to delete this format folder and all files inside it? This will remove the folder across all departments.')) return;
+  const fld = (state.formatFolders || []).find(f => f.id === folderId);
+  const folderTitle = fld ? fld.title : 'this folder';
 
-  try {
-    const res = await fetch(`/api/format-folders/${folderId}`, {
-      method: 'DELETE'
-    }).then(r => r.json());
+  window.showConfirmDialog({
+    title: `Delete "${folderTitle}"?`,
+    message: `Are you sure you want to delete format folder "${folderTitle}"? This will permanently remove the folder and any associated coordinator submissions across all 14 departments.`,
+    confirmText: 'Yes, Delete Folder',
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`/api/format-folders/${folderId}`, {
+          method: 'DELETE'
+        }).then(r => r.json());
 
-    if (res.success) {
-      showToast('Format folder deleted successfully.', 'info');
-      state.selectedAdminFormatFolder = null;
-      await loadInitialData();
-      renderActiveView();
-    } else {
-      showToast(res.error || 'Unable to delete folder.', 'error');
+        if (res.success) {
+          showToast(`Folder "${folderTitle}" deleted successfully.`, 'info');
+          state.selectedAdminFormatFolder = null;
+          await loadInitialData();
+          renderActiveView();
+        } else {
+          showToast(res.error || 'Unable to delete folder.', 'error');
+        }
+      } catch (err) {
+        console.debug('Folder delete notice:', err);
+        showToast('Unable to delete folder.', 'error');
+      }
     }
-  } catch (err) {
-    console.debug('Folder delete notice:', err);
-    showToast('Unable to delete folder.', 'error');
-  }
+  });
 };
 
 window.handleUploadFileToFolder = async function(folderId) {
@@ -1848,24 +1900,29 @@ window.handleUploadFileToFolder = async function(folderId) {
 };
 
 window.handleDeleteFileFromFolder = async function(folderId, fileId) {
-  if (!confirm('Are you sure you want to delete this format file?')) return;
+  window.showConfirmDialog({
+    title: 'Delete Format File?',
+    message: 'Are you sure you want to delete this template file from the folder?',
+    confirmText: 'Yes, Delete File',
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`/api/format-folders/${folderId}/files/${fileId}`, {
+          method: 'DELETE'
+        }).then(r => r.json());
 
-  try {
-    const res = await fetch(`/api/format-folders/${folderId}/files/${fileId}`, {
-      method: 'DELETE'
-    }).then(r => r.json());
-
-    if (res.success) {
-      showToast('Format file deleted.', 'info');
-      await loadInitialData();
-      renderActiveView();
-    } else {
-      showToast('Unable to delete file.', 'error');
+        if (res.success) {
+          showToast('Format file deleted.', 'info');
+          await loadInitialData();
+          renderActiveView();
+        } else {
+          showToast(res.error || 'Unable to delete file.', 'error');
+        }
+      } catch (err) {
+        console.debug('Delete file notice:', err);
+        showToast('Unable to delete file.', 'error');
+      }
     }
-  } catch (err) {
-    console.debug('Delete file notice:', err);
-    showToast('Unable to delete file.', 'error');
-  }
+  });
 };
 
 // ==========================================================================
@@ -2060,21 +2117,26 @@ window.filterRegisteredUsersTable = function() {
 };
 
 window.handleDeleteRegisteredUser = async function(userId, userName) {
-  if (!confirm(`Are you sure you want to revoke and delete the account for "${userName}"?`)) return;
-
-  try {
-    const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' }).then(r => r.json());
-    if (res.success) {
-      showToast(`Account for "${userName}" revoked successfully.`, 'info');
-      await loadInitialData();
-      renderActiveView();
-    } else {
-      showToast(res.error || 'Failed to revoke user account.', 'error');
+  window.showConfirmDialog({
+    title: `Revoke User Account?`,
+    message: `Are you sure you want to revoke and delete the account for "${userName}"? This cannot be undone.`,
+    confirmText: 'Yes, Revoke Account',
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' }).then(r => r.json());
+        if (res.success) {
+          showToast(`Account for "${userName}" revoked successfully.`, 'info');
+          await loadInitialData();
+          renderActiveView();
+        } else {
+          showToast(res.error || 'Failed to revoke user account.', 'error');
+        }
+      } catch (err) {
+        console.debug('Delete user notice:', err);
+        showToast('Unable to revoke account.', 'error');
+      }
     }
-  } catch (err) {
-    console.debug('Delete user notice:', err);
-    showToast('Unable to revoke account.', 'error');
-  }
+  });
 };
 // ==========================================================================
 // 3B. ADMIN 14 DEPARTMENT-WISE ARCHIVE & SUBMISSION FOLDERS
