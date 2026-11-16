@@ -1,0 +1,35 @@
+[
+  {
+    "id": "fld-1794829252595",
+    "title": "kartik",
+    "description": "kartik",
+    "createdAt": "2026-11-16 11:40",
+    "createdBy": "Director IQAC",
+    "files": [
+      {
+        "id": "file-1794829272362",
+        "name": "BIGCE_Criteria_Master_Format.xlsx",
+        "url": "/api/files/download/BIGCE_Criteria_Master_Format.xlsx?f=aHR0cHM6Ly9yZXMuY2xvdWRpbmFyeS5jb20vd3RsYnJkazMvcmF3L3VwbG9hZC92MTc5NDgyOTI3Mi9uYWFja2svbzlzcnZobm50a24zemd1MHF5bDAueGxzeA",
+        "size": "0.02 MB",
+        "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "uploadedAt": "2026-11-16 11:41"
+      },
+      {
+        "id": "file-1794829282542",
+        "name": "BIGCE_Criteria_Master_Format.xlsx",
+        "url": "/api/files/download/BIGCE_Criteria_Master_Format.xlsx?f=aHR0cHM6Ly9yZXMuY2xvdWRpbmFyeS5jb20vd3RsYnJkazMvcmF3L3VwbG9hZC92MTc5NDgyOTI4Mi9uYWFja2svZ2h4NWFwZW1oY2pxbGh6b3kyZTkueGxzeA",
+        "size": "0.02 MB",
+        "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "uploadedAt": "2026-11-16 11:41"
+      },
+      {
+        "id": "file-1794829290280",
+        "name": "BIGCE_Criteria_Master_Format.xlsx",
+        "url": "/api/files/download/BIGCE_Criteria_Master_Format.xlsx?f=aHR0cHM6Ly9yZXMuY2xvdWRpbmFyeS5jb20vd3RsYnJkazMvcmF3L3VwbG9hZC92MTc5NDgyOTI5MC9uYWFja2sva2Z1NHZzaWc4eGI4MnhkdHc4OXIueGxzeA",
+        "size": "0.02 MB",
+        "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "uploadedAt": "2026-11-16 11:41"
+      }
+    ]
+  }
+]

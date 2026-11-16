@@ -1,0 +1,54 @@
+[
+  {
+    "id": "usr-1794824699385",
+    "password": "Zateshop143@",
+    "role": "dept_coordinator",
+    "phone": "",
+    "departmentId": "ug-cse",
+    "name": "kartik kothalkar",
+    "registeredAt": "2026-11-16 10:24",
+    "designation": "Accreditation Coordinator",
+    "email": "kothalkark14@gmail.com",
+    "username": "thekkartik",
+    "syncedAt": "2026-11-16T11:33:56.194Z"
+  },
+  {
+    "id": "usr-admin",
+    "role": "admin_coordinator",
+    "phone": "+91 217 2500219",
+    "departmentId": null,
+    "designation": "Director IQAC & Overall Accreditation Admin",
+    "email": "iqac.bigce@gmail.com",
+    "username": "admin",
+    "name": "Director IQAC",
+    "registeredAt": "2026-11-16 10:00",
+    "password": "Admin@bigce2026",
+    "syncedAt": "2026-11-16T11:33:56.304Z"
+  },
+  {
+    "id": "usr-president",
+    "role": "president",
+    "phone": "+91 217 2500221",
+    "departmentId": null,
+    "name": "Hon. Ravindraji Gaikwad",
+    "designation": "Chairman & President, KSGBS Governing Council",
+    "email": "president.bigce@gmail.com",
+    "username": "president",
+    "password": "President@bigce2026",
+    "registeredAt": "2026-11-16 10:00",
+    "syncedAt": "2026-11-16T11:33:56.406Z"
+  },
+  {
+    "id": "usr-principal",
+    "role": "principal",
+    "phone": "+91 217 2500220",
+    "departmentId": null,
+    "name": "Dr. Anil K. Deshamne",
+    "designation": "Principal & Head of Institution",
+    "email": "principal.bigce@gmail.com",
+    "username": "principal",
+    "password": "Principal@bigce2026",
+    "registeredAt": "2026-11-16 10:00",
+    "syncedAt": "2026-11-16T11:33:56.514Z"
+  }
+]

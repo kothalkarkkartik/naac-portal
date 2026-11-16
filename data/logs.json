@@ -1,0 +1,290 @@
+[
+  {
+    "id": "log-1794838536559",
+    "timestamp": "2026-11-16 14:15:36",
+    "action": "SUBMIT_YEAR_TO_HOD",
+    "actor": "kartik kothalkar",
+    "details": "Submitted 2023-2024 Excel sheet to HOD for approval",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794838533506",
+    "timestamp": "2026-11-16 14:15:33",
+    "action": "SUBMIT_YEAR_TO_HOD",
+    "actor": "kartik kothalkar",
+    "details": "Submitted 2023-2024 Excel sheet to HOD for approval",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794838531355",
+    "timestamp": "2026-11-16 14:15:31",
+    "action": "SUBMIT_YEAR_TO_HOD",
+    "actor": "kartik kothalkar",
+    "details": "Submitted 2023-2024 Excel sheet to HOD for approval",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794838479223",
+    "timestamp": "2026-11-16 14:14:39",
+    "action": "SUBMIT_YEAR_TO_HOD",
+    "actor": "Kartik Kothalkar",
+    "details": "Submitted 2024-2025 Excel sheet to HOD for approval",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794838479214",
+    "timestamp": "2026-11-16 14:14:39",
+    "action": "UPDATE_YEARWISE_RECORD",
+    "actor": "Kartik Kothalkar",
+    "details": "Updated folder criteria upload for ug-cse (2024-2025) [fld-1794829252595]",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794837945498",
+    "timestamp": "2026-11-16 14:05:45",
+    "action": "SUBMIT_YEAR_TO_HOD",
+    "actor": "kartik kothalkar",
+    "details": "Submitted 2023-2024 Excel sheet to HOD for approval",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794837933723",
+    "timestamp": "2026-11-16 14:05:33",
+    "action": "SUBMIT_YEAR_TO_HOD",
+    "actor": "kartik kothalkar",
+    "details": "Submitted 2023-2024 Excel sheet to HOD for approval",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794837928274",
+    "timestamp": "2026-11-16 14:05:28",
+    "action": "UPDATE_YEARWISE_RECORD",
+    "actor": "kartik kothalkar",
+    "details": "Updated folder criteria upload for ug-cse (2023-2024) [fld-1794829252595]",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794837921557",
+    "timestamp": "2026-11-16 14:05:21",
+    "action": "UPDATE_YEARWISE_RECORD",
+    "actor": "kartik kothalkar",
+    "details": "Updated folder criteria upload for ug-cse (2023-2024) [fld-1794829252595]",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794837895593",
+    "timestamp": "2026-11-16 14:04:55",
+    "action": "CREATE_YEARWISE_RECORD",
+    "actor": "kartik kothalkar",
+    "details": "Initialized criteria upload for ug-cse (2023-2024) into folder fld-1794829252595",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794837874419",
+    "timestamp": "2026-11-16 14:04:34",
+    "action": "DELETE_FOLDER_FILE",
+    "actor": "Coordinator",
+    "details": "Removed file file-1794829272362 from record yr-ug-cse-2024-2025-fld-1794829252595",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794837865727",
+    "timestamp": "2026-11-16 14:04:25",
+    "action": "UPDATE_YEARWISE_RECORD",
+    "actor": "kartik kothalkar",
+    "details": "Updated folder criteria upload for ug-cse (2024-2025) [fld-1794829252595]",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794837098191",
+    "timestamp": "2026-11-16 13:51:38",
+    "action": "RETURN_YEAR_FOR_REVISION",
+    "actor": "Dr. S. R. Patil",
+    "details": "Returned 2024-2025 submission for revision with notes: \"Incorrect data in table columns. Please verify and re-upload.\" (Previous files deleted for re-upload)",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794837098072",
+    "timestamp": "2026-11-16 13:51:38",
+    "action": "UPDATE_YEARWISE_RECORD",
+    "actor": "Kartik",
+    "details": "Updated folder criteria upload for ug-cse (2024-2025) [fld-1794829252595]",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794836697871",
+    "timestamp": "2026-11-16 13:44:57",
+    "action": "IQAC_VERIFY_YEAR",
+    "actor": "Director IQAC",
+    "details": "IQAC officially verified & sanctioned 2024-2025 criteria submission",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794836685187",
+    "timestamp": "2026-11-16 13:44:45",
+    "action": "PRESIDENT_ENDORSE_YEAR",
+    "actor": "Hon. Ravindraji Gaikwad",
+    "details": "Hon. President affixed Presidential Seal to 2024-2025 submission",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794836685024",
+    "timestamp": "2026-11-16 13:44:45",
+    "action": "PRINCIPAL_APPROVE_YEAR",
+    "actor": "Dr. Anil K. Deshamne",
+    "details": "Principal sanctioned 2024-2025 submission for SSR",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794836140202",
+    "timestamp": "2026-11-16 13:35:40",
+    "action": "DELETE_FOLDER_FILE",
+    "actor": "Coordinator",
+    "details": "Removed file file-1794829272362 from record yr-ug-cse-2024-2025-fld-1794829252595",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794836101324",
+    "timestamp": "2026-11-16 13:35:01",
+    "action": "LOGIN",
+    "actor": "kartik kothalkar (dept_coordinator)",
+    "details": "User authenticated directly against Cloud Firestore",
+    "dept": null
+  },
+  {
+    "id": "log-1794835914386",
+    "timestamp": "2026-11-16 13:31:54",
+    "action": "RETURN_YEAR_FOR_REVISION",
+    "actor": "Director IQAC",
+    "details": "Returned 2024-2025 submission for revision with notes: \"...;;\"",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794835619808",
+    "timestamp": "2026-11-16 13:26:59",
+    "action": "RETURN_YEAR_FOR_REVISION",
+    "actor": "Director IQAC",
+    "details": "Returned 2024-2025 submission for revision with notes: \"Metric 1.1.2 data missing. Please update.\"",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794835619683",
+    "timestamp": "2026-11-16 13:26:59",
+    "action": "IQAC_VERIFY_YEAR",
+    "actor": "Director IQAC",
+    "details": "IQAC officially verified & sanctioned 2024-2025 criteria submission",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794834430736",
+    "timestamp": "2026-11-16 13:07:10",
+    "action": "RETURN_YEAR_FOR_REVISION",
+    "actor": "Director IQAC",
+    "details": "Returned 2024-2025 submission for revision with notes: \"./../ /./\"",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794834396348",
+    "timestamp": "2026-11-16 13:06:36",
+    "action": "HOD_APPROVE_YEAR",
+    "actor": "Director IQAC",
+    "details": "HOD verified & approved 2024-2025 Excel submission",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794833284749",
+    "timestamp": "2026-11-16 12:48:04",
+    "action": "LOGIN",
+    "actor": "Director IQAC (admin_coordinator)",
+    "details": "User authenticated directly against Cloud Firestore",
+    "dept": null
+  },
+  {
+    "id": "log-1794831840879",
+    "timestamp": "2026-11-16 12:24:00",
+    "action": "SUBMIT_YEAR_TO_HOD",
+    "actor": "kartik kothalkar",
+    "details": "Submitted 2024-2025 Excel sheet to HOD for approval",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794831828397",
+    "timestamp": "2026-11-16 12:23:48",
+    "action": "SUBMIT_YEAR_TO_HOD",
+    "actor": "kartik kothalkar",
+    "details": "Submitted 2024-2025 Excel sheet to HOD for approval",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794831822712",
+    "timestamp": "2026-11-16 12:23:42",
+    "action": "UPDATE_YEARWISE_RECORD",
+    "actor": "kartik kothalkar",
+    "details": "Updated folder criteria upload for ug-cse (2024-2025) [fld-1794829252595]",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794830626724",
+    "timestamp": "2026-11-16 12:03:46",
+    "action": "DELETE_FOLDER_FILE",
+    "actor": "Coordinator",
+    "details": "Removed file BIGCE_Criteria_Master_Format.xlsx from record yr-ug-cse-2024-2025-fld-1794829252595",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794829763174",
+    "timestamp": "2026-11-16 11:49:23",
+    "action": "CREATE_YEARWISE_RECORD",
+    "actor": "kartik kothalkar",
+    "details": "Initialized criteria upload for ug-cse (2024-2025) into folder fld-1794829252595",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1794829362563",
+    "timestamp": "2026-11-16 11:42:42",
+    "action": "LOGIN",
+    "actor": "kartik kothalkar (dept_coordinator)",
+    "details": "User authenticated directly against Cloud Firestore",
+    "dept": null
+  },
+  {
+    "id": "log-1794829290281",
+    "timestamp": "2026-11-16 11:41:30",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file BIGCE_Criteria_Master_Format.xlsx to kartik",
+    "dept": null
+  },
+  {
+    "id": "log-1794829282543",
+    "timestamp": "2026-11-16 11:41:22",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file BIGCE_Criteria_Master_Format.xlsx to kartik",
+    "dept": null
+  },
+  {
+    "id": "log-1794829272363",
+    "timestamp": "2026-11-16 11:41:12",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file BIGCE_Criteria_Master_Format.xlsx to kartik",
+    "dept": null
+  },
+  {
+    "id": "log-1794829252600",
+    "timestamp": "2026-11-16 11:40:52",
+    "action": "CREATE_FORMAT_FOLDER",
+    "actor": "Director IQAC",
+    "details": "Created format folder: kartik",
+    "dept": null
+  },
+  {
+    "id": "log-init",
+    "action": "SYSTEM_INITIALIZE",
+    "user": "Director IQAC",
+    "details": "Clean NAAC accreditation workspace initialized. Ready for official template release.",
+    "departmentId": "all",
+    "timestamp": "2026-11-16 11:37"
+  }
+]
