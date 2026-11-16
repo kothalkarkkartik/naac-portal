@@ -3,3 +3,6 @@ node_modules
 .gemini
 uploads/*
 !uploads/.gitkeep
+firebase-admin-key.json
+
+.vercel

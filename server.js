@@ -883,13 +883,20 @@ app.post('/api/format-folders', (req, res) => {
 app.delete('/api/format-folders/:id', (req, res) => {
   let folders = readData('format_folders.json') || [];
   const folder = folders.find(f => f.id === req.params.id);
-  if (!folder) {
-    return res.status(404).json({ error: 'Folder not found.' });
+
+  // Clean up any yearwise submissions that belonged to this folder
+  try {
+    let yearwise = readData('yearwise_records.json') || [];
+    const updatedYearwise = yearwise.filter(r => r.folderId !== req.params.id);
+    writeData('yearwise_records.json', updatedYearwise);
+  } catch (e) {
+    console.debug('Yearwise record cleanup notice:', e);
   }
+
   folders = folders.filter(f => f.id !== req.params.id);
   writeData('format_folders.json', folders);
   deleteFromFirestore('format_folders', req.params.id);
-  logActivity('DELETE_FORMAT_FOLDER', 'Director IQAC', `Deleted format folder: ${folder.title}`);
+  logActivity('DELETE_FORMAT_FOLDER', 'Director IQAC', `Deleted format folder: ${folder?.title || req.params.id}`);
   res.json({ success: true, message: 'Folder deleted.' });
 });
 

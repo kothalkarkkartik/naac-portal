@@ -1777,7 +1777,7 @@ window.handleCreateFormatFolder = async function() {
 };
 
 window.handleDeleteFormatFolder = async function(folderId) {
-  if (!confirm('Are you sure you want to delete this format folder and all files inside it?')) return;
+  if (!confirm('Are you sure you want to delete this format folder and all files inside it? This will remove the folder across all departments.')) return;
 
   try {
     const res = await fetch(`/api/format-folders/${folderId}`, {
@@ -1785,11 +1785,12 @@ window.handleDeleteFormatFolder = async function(folderId) {
     }).then(r => r.json());
 
     if (res.success) {
-      showToast('Format folder deleted.', 'info');
+      showToast('Format folder deleted successfully.', 'info');
+      state.selectedAdminFormatFolder = null;
       await loadInitialData();
       renderActiveView();
     } else {
-      showToast('Unable to delete folder.', 'error');
+      showToast(res.error || 'Unable to delete folder.', 'error');
     }
   } catch (err) {
     console.debug('Folder delete notice:', err);
@@ -2138,7 +2139,12 @@ function renderAdminDepartmentFolders(container) {
                 <span style="font-size: 12.5px; font-weight: 600; color: #64748B;">${fld.description || 'Official NAAC Accreditation Format'} • Coordinator: <strong>${dept.coordinator}</strong> • Head: <strong>${dept.hod}</strong></span>
               </div>
             </div>
-            <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${(state.currentUser?.role === 'admin_coordinator') ? `
+                <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;" onclick="handleDeleteFormatFolder('${fld.id}')" title="Delete this format folder across all departments">
+                  <i class="fas fa-trash-alt"></i> Delete Folder
+                </button>
+              ` : ''}
               ${window.renderFolderStatusBadge(fld, fldRec)}
             </div>
           </div>
@@ -2499,6 +2505,12 @@ function renderAdminDepartmentFolders(container) {
                     <span>AY ${state.selectedAcademicYear}</span>
                   </div>
                   <div style="display: flex; align-items: center; gap: 8px;">
+                    ${(state.currentUser?.role === 'admin_coordinator') ? `
+                      <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 7px 12px; border-radius: 9px; display: inline-flex; align-items: center; gap: 5px;" onclick="event.stopPropagation(); handleDeleteFormatFolder('${fld.id}')" title="Delete this format folder across all departments">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>Delete Folder</span>
+                      </button>
+                    ` : ''}
                     ${(fldRec && fldRec.uploadedFiles && fldRec.uploadedFiles.length > 0) ? `
                       <button type="button" class="ios-btn" style="background: #EFF6FF; border: 1.5px solid #93C5FD; color: #1D4ED8; font-size: 12px; font-weight: 800; padding: 7px 14px; border-radius: 9px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(37,99,235,0.08);" onclick="event.stopPropagation(); openFileViewer('${encodeURIComponent(JSON.stringify(fldRec.uploadedFiles[0]))}', '${dept.code} Response: ${fldRec.uploadedFiles[0].name}')" title="View submitted response directly without leaving">
                         <i class="fas fa-eye" style="color: #2563EB;"></i>
