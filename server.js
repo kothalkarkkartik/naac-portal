@@ -1075,6 +1075,27 @@ app.delete('/api/yearwise-records/:id/files/:filename', (req, res) => {
   res.json({ success: true, record: rec });
 });
 
+// Delete entire yearwise record / submission
+app.delete('/api/yearwise-records/:id', (req, res) => {
+  let records = readData('yearwise_records.json') || [];
+  records = records.filter(r => r.id !== req.params.id);
+  writeData('yearwise_records.json', records);
+  deleteFromFirestore('yearwise_records', req.params.id);
+  logActivity('DELETE_YEARWISE_RECORD', 'Director IQAC', `Deleted submission record: ${req.params.id}`);
+  res.json({ success: true, message: 'Submission record removed.' });
+});
+
+// Clean up orphaned records whose format folders no longer exist
+app.post('/api/admin/clean-orphaned-records', (req, res) => {
+  const folders = readData('format_folders.json') || [];
+  const folderIds = new Set(folders.map(f => f.id));
+  let records = readData('yearwise_records.json') || [];
+  const initialCount = records.length;
+  records = records.filter(r => folderIds.has(r.folderId));
+  writeData('yearwise_records.json', records);
+  res.json({ success: true, removedCount: initialCount - records.length, remainingCount: records.length });
+});
+
 app.post('/api/yearwise-records/:id/workflow', (req, res) => {
   let records = readData('yearwise_records.json') || [];
   const index = records.findIndex(r => r.id === req.params.id);
