@@ -1,5 +1,133 @@
 [
   {
+    "id": "log-1795252364657",
+    "timestamp": "2026-11-21 09:12:44",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file mmek5mozhchvczk0roep (1).pptx to FEEDBACKS",
+    "dept": null
+  },
+  {
+    "id": "log-1795252350947",
+    "timestamp": "2026-11-21 09:12:30",
+    "action": "CREATE_FORMAT_FOLDER",
+    "actor": "Director IQAC",
+    "details": "Created format folder: FEEDBACKS",
+    "dept": null
+  },
+  {
+    "id": "log-1795251302265",
+    "timestamp": "2026-11-21 08:55:02",
+    "action": "DELETE_FORMAT_FOLDER",
+    "actor": "Director IQAC",
+    "details": "Deleted format folder: FEEDBACK",
+    "dept": null
+  },
+  {
+    "id": "log-1795251264102",
+    "timestamp": "2026-11-21 08:54:24",
+    "action": "RETURN_YEAR_FOR_REVISION",
+    "actor": "Director IQAC",
+    "details": "Returned 2024-2025 submission for revision with notes: \"n   bnmbmbmb\" (Previous files deleted for re-upload)",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1795250719276",
+    "timestamp": "2026-11-21 08:45:19",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file mmek5mozhchvczk0roep (1).pptx to FEEDBACK",
+    "dept": null
+  },
+  {
+    "id": "log-1795250603969",
+    "timestamp": "2026-11-21 08:43:23",
+    "action": "UPDATE_YEARWISE_RECORD",
+    "actor": "kartik kothalkar",
+    "details": "Updated folder criteria upload for ug-cse (2024-2025) [fld-1795237774030]",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1795250352898",
+    "timestamp": "2026-11-21 08:39:12",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file mmek5mozhchvczk0roep.pptx to FEEDBACK",
+    "dept": null
+  },
+  {
+    "id": "log-1795250351841",
+    "timestamp": "2026-11-21 08:39:11",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file mmek5mozhchvczk0roep.pptx to FEEDBACK",
+    "dept": null
+  },
+  {
+    "id": "log-1795250351604",
+    "timestamp": "2026-11-21 08:39:11",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file mmek5mozhchvczk0roep.pptx to FEEDBACK",
+    "dept": null
+  },
+  {
+    "id": "log-1795250351533",
+    "timestamp": "2026-11-21 08:39:11",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file mmek5mozhchvczk0roep.pptx to FEEDBACK",
+    "dept": null
+  },
+  {
+    "id": "log-1795250312004",
+    "timestamp": "2026-11-21 08:38:32",
+    "action": "LOGIN",
+    "actor": "Director IQAC (admin_coordinator)",
+    "details": "User authenticated directly against Cloud Firestore",
+    "dept": null
+  },
+  {
+    "id": "log-1795250260368",
+    "timestamp": "2026-11-21 08:37:40",
+    "action": "DELETE_FOLDER_FILE",
+    "actor": "Coordinator",
+    "details": "Removed file file-1795242389419 from record yr-ug-cse-2024-2025-fld-1795237774030",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1795250256713",
+    "timestamp": "2026-11-21 08:37:36",
+    "action": "UPDATE_YEARWISE_RECORD",
+    "actor": "kartik kothalkar",
+    "details": "Updated folder criteria upload for ug-cse (2024-2025) [fld-1795237774030]",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1795250237139",
+    "timestamp": "2026-11-21 08:37:17",
+    "action": "DELETE_FOLDER_FILE",
+    "actor": "Coordinator",
+    "details": "Removed file file-1795242389419 from record yr-ug-cse-2024-2025-fld-1795237774030",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1795242405959",
+    "timestamp": "2026-11-21 06:26:45",
+    "action": "CREATE_YEARWISE_RECORD",
+    "actor": "CSE Coordinator",
+    "details": "Initialized criteria upload for ug-cse (2024-2025) into folder fld-1795237774030",
+    "dept": "ug-cse"
+  },
+  {
+    "id": "log-1795242389437",
+    "timestamp": "2026-11-21 06:26:29",
+    "action": "ADD_FORMAT_FILE",
+    "actor": "Director IQAC",
+    "details": "Added format file Feedback_Criteria_Template.xlsx to FEEDBACK",
+    "dept": null
+  },
+  {
     "id": "log-1794838536559",
     "timestamp": "2026-11-16 14:15:36",
     "action": "SUBMIT_YEAR_TO_HOD",

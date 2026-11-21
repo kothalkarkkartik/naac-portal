@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "fld-1795252350943",
+    "createdAt": "2026-11-21 09:12",
+    "createdBy": "Director IQAC",
+    "description": ".",
+    "title": "FEEDBACKS",
+    "files": [
+      {
+        "id": "file-1795252364655",
+        "name": "mmek5mozhchvczk0roep (1).pptx",
+        "url": "/api/files/download/mmek5mozhchvczk0roep%20(1).pptx?f=aHR0cHM6Ly9yZXMuY2xvdWRpbmFyeS5jb20vd3RsYnJkazMvcmF3L3VwbG9hZC92MTc5NTI1MjM2NS9uYWFja2sveTl2bXhxc3MydmcxeHlqcmN4cDIucHB0eA",
+        "size": "1.46 MB",
+        "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "uploadedAt": "2026-11-21 09:12"
+      }
+    ],
+    "syncedAt": "2026-11-21T09:12:44.656Z"
+  }
+]

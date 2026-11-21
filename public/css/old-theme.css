@@ -1523,3 +1523,167 @@ body {
   border-top: 2px solid #2563EB;
   font-weight: 800;
 }
+
+/* ==========================================================================
+   ENHANCED POPUP, TOAST & INTERACTION SYSTEM (Apple iOS Engine)
+   ========================================================================== */
+
+/* Universal Keyframe Animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes modalZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shimmerEffect {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Enhanced Modal Overlays & Sheets */
+.ios-modal-overlay {
+  animation: backdropFadeIn 0.2s ease forwards;
+}
+
+.ios-modal-sheet {
+  animation: modalZoomIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: center center;
+}
+
+/* Universal Toast Notifications (Desktop & All Viewports) */
+.ios-toast-container {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 90vw;
+  width: auto;
+}
+
+.ios-toast-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25), 0 3px 8px rgba(15, 23, 42, 0.12);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(-22px) scale(0.94);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.ios-toast-pill.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.ios-toast-success {
+  background: #0F172A;
+  color: #F8FAFC;
+  border: 1.5px solid rgba(16, 185, 129, 0.55);
+}
+.ios-toast-success i {
+  color: #10B981;
+  font-size: 15px;
+}
+
+.ios-toast-error {
+  background: #7F1D1D;
+  color: #FEF2F2;
+  border: 1.5px solid #EF4444;
+}
+.ios-toast-error i {
+  color: #F87171;
+  font-size: 15px;
+}
+
+.ios-toast-warning {
+  background: #78350F;
+  color: #FEF3C7;
+  border: 1.5px solid #F59E0B;
+}
+.ios-toast-warning i {
+  color: #FBBF24;
+  font-size: 15px;
+}
+
+.ios-toast-info {
+  background: #0F172A;
+  color: #F8FAFC;
+  border: 1.5px solid rgba(59, 130, 246, 0.65);
+}
+.ios-toast-info i {
+  color: #60A5FA;
+  font-size: 15px;
+}
+
+/* Upload Progress Modal Card */
+.upload-modal-sheet {
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+  width: 92%;
+  max-width: 440px;
+  padding: 26px 24px;
+  text-align: center;
+  border: 1.5px solid #E2E8F0;
+  position: relative;
+  animation: modalZoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.upload-modal-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.upload-modal-close-btn:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+  transform: scale(1.08);
+}
+
+.upload-progress-animated-bar {
+  background: linear-gradient(90deg, #2563EB 0%, #3B82F6 40%, #10B981 100%);
+  background-size: 200% 100%;
+  animation: shimmerEffect 2.5s linear infinite;
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}

@@ -514,10 +514,19 @@ app.post('/api/submissions/:id/workflow', (req, res) => {
       sub.hodRemarks = `Returned: ${remarks || 'Needs revision in response file.'}`;
       if (Array.isArray(sub.uploadedFiles)) {
         sub.uploadedFiles.forEach(f => {
-          if (f && f.path && fs.existsSync(f.path)) {
-            try { fs.unlinkSync(f.path); } catch (e) {}
+          if (f) {
+            const filePath = f.path || (f.filename ? path.join(__dirname, 'uploads', f.filename) : null);
+            if (filePath && fs.existsSync(filePath)) {
+              try { fs.unlinkSync(filePath); } catch (e) {}
+            }
           }
         });
+      }
+      if (sub.excelFile) {
+        const efPath = sub.excelFile.path || (sub.excelFile.filename ? path.join(__dirname, 'uploads', sub.excelFile.filename) : null);
+        if (efPath && fs.existsSync(efPath)) {
+          try { fs.unlinkSync(efPath); } catch (e) {}
+        }
       }
       sub.uploadedFiles = [];
       sub.excelFile = null;
@@ -566,13 +575,32 @@ function getMimeType(filename) {
   switch (ext) {
     case '.xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     case '.xls': return 'application/vnd.ms-excel';
+    case '.xlsm': return 'application/vnd.ms-excel.sheet.macroEnabled.12';
+    case '.xlsb': return 'application/vnd.ms-excel.sheet.binary.macroEnabled.12';
     case '.pdf': return 'application/pdf';
     case '.docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     case '.doc': return 'application/msword';
     case '.csv': return 'text/csv';
+    case '.tsv': return 'text/tab-separated-values';
+    case '.ppt': return 'application/vnd.ms-powerpoint';
+    case '.pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    case '.txt': return 'text/plain';
+    case '.rtf': return 'application/rtf';
+    case '.odt': return 'application/vnd.oasis.opendocument.text';
+    case '.ods': return 'application/vnd.oasis.opendocument.spreadsheet';
+    case '.odp': return 'application/vnd.oasis.opendocument.presentation';
+    case '.zip': return 'application/zip';
+    case '.rar': return 'application/vnd.rar';
+    case '.7z': return 'application/x-7z-compressed';
+    case '.tar': return 'application/x-tar';
+    case '.gz': return 'application/gzip';
     case '.png': return 'image/png';
     case '.jpg':
     case '.jpeg': return 'image/jpeg';
+    case '.webp': return 'image/webp';
+    case '.gif': return 'image/gif';
+    case '.svg': return 'image/svg+xml';
+    case '.bmp': return 'image/bmp';
     default: return 'application/octet-stream';
   }
 }
@@ -828,7 +856,7 @@ app.post('/api/master-template', (req, res) => {
 });
 
 // Format Folders & Files API (Admin creates folders & uploads files, Coordinators browse & download)
-app.get('/api/format-folders', async (req, res) => {
+async function getAllFormatFolders() {
   let folders = [];
   if (adminDb) {
     try {
@@ -845,7 +873,6 @@ app.get('/api/format-folders', async (req, res) => {
     }
   }
 
-  // Merge / Fallback with local format_folders.json
   const localFolders = readData('format_folders.json') || [];
   if (folders.length === 0) {
     folders = localFolders.filter(f => f && !f.id?.startsWith('_'));
@@ -856,90 +883,11 @@ app.get('/api/format-folders', async (req, res) => {
       }
     });
   }
-  res.json(folders);
-});
-
-app.post('/api/format-folders', (req, res) => {
-  const { title, description } = req.body;
-  if (!title) {
-    return res.status(400).json({ error: 'Folder title is required.' });
-  }
-  let folders = readData('format_folders.json') || [];
-  const newFolder = {
-    id: `fld-${Date.now()}`,
-    title: title.trim(),
-    description: description ? description.trim() : '',
-    createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
-    createdBy: 'Director IQAC',
-    files: []
-  };
-  folders.push(newFolder);
   writeData('format_folders.json', folders);
-  syncToFirestore('format_folders', newFolder.id, newFolder);
-  logActivity('CREATE_FORMAT_FOLDER', 'Director IQAC', `Created format folder: ${newFolder.title}`);
-  res.json({ success: true, folder: newFolder });
-});
+  return folders;
+}
 
-app.delete('/api/format-folders/:id', (req, res) => {
-  let folders = readData('format_folders.json') || [];
-  const folder = folders.find(f => f.id === req.params.id);
-
-  // Clean up any yearwise submissions that belonged to this folder
-  try {
-    let yearwise = readData('yearwise_records.json') || [];
-    const updatedYearwise = yearwise.filter(r => r.folderId !== req.params.id);
-    writeData('yearwise_records.json', updatedYearwise);
-  } catch (e) {
-    console.debug('Yearwise record cleanup notice:', e);
-  }
-
-  folders = folders.filter(f => f.id !== req.params.id);
-  writeData('format_folders.json', folders);
-  deleteFromFirestore('format_folders', req.params.id);
-  logActivity('DELETE_FORMAT_FOLDER', 'Director IQAC', `Deleted format folder: ${folder?.title || req.params.id}`);
-  res.json({ success: true, message: 'Folder deleted.' });
-});
-
-app.post('/api/format-folders/:id/files', (req, res) => {
-  const { name, url, size, type } = req.body;
-  if (!name || !url) {
-    return res.status(400).json({ error: 'File name and file URL are required.' });
-  }
-  let folders = readData('format_folders.json') || [];
-  const folder = folders.find(f => f.id === req.params.id);
-  if (!folder) {
-    return res.status(404).json({ error: 'Folder not found.' });
-  }
-  const newFile = {
-    id: `file-${Date.now()}`,
-    name: name.trim(),
-    url: url,
-    size: size || 'Unknown size',
-    type: type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    uploadedAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
-  };
-  if (!folder.files) folder.files = [];
-  folder.files.push(newFile);
-  writeData('format_folders.json', folders);
-  syncToFirestore('format_folders', folder.id, folder);
-  logActivity('ADD_FORMAT_FILE', 'Director IQAC', `Added format file ${newFile.name} to ${folder.title}`);
-  res.json({ success: true, file: newFile, folder });
-});
-
-app.delete('/api/format-folders/:id/files/:fileId', (req, res) => {
-  let folders = readData('format_folders.json') || [];
-  const folder = folders.find(f => f.id === req.params.id);
-  if (!folder) {
-    return res.status(404).json({ error: 'Folder not found.' });
-  }
-  folder.files = (folder.files || []).filter(f => f.id !== req.params.fileId);
-  writeData('format_folders.json', folders);
-  syncToFirestore('format_folders', folder.id, folder);
-  res.json({ success: true, message: 'File deleted from folder.', folder });
-});
-
-// Yearwise Submissions API (2023-2024 to 2026-2027)
-app.get('/api/yearwise-records', async (req, res) => {
+async function getAllYearwiseRecords() {
   let records = [];
   if (adminDb) {
     try {
@@ -956,7 +904,6 @@ app.get('/api/yearwise-records', async (req, res) => {
     }
   }
 
-  // Merge / Fallback with local yearwise_records.json
   const localRecords = readData('yearwise_records.json') || [];
   if (records.length === 0) {
     records = localRecords.filter(r => r && !r.id?.startsWith('_'));
@@ -967,6 +914,97 @@ app.get('/api/yearwise-records', async (req, res) => {
       }
     });
   }
+  writeData('yearwise_records.json', records);
+  return records;
+}
+
+app.get('/api/format-folders', async (req, res) => {
+  const folders = await getAllFormatFolders();
+  res.json(folders);
+});
+
+app.post('/api/format-folders', async (req, res) => {
+  const { title, description } = req.body;
+  if (!title) {
+    return res.status(400).json({ error: 'Folder title is required.' });
+  }
+  let folders = await getAllFormatFolders();
+  const newFolder = {
+    id: `fld-${Date.now()}`,
+    title: title.trim(),
+    description: description ? description.trim() : '',
+    createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    createdBy: 'Director IQAC',
+    files: []
+  };
+  folders.push(newFolder);
+  writeData('format_folders.json', folders);
+  syncToFirestore('format_folders', newFolder.id, newFolder);
+  logActivity('CREATE_FORMAT_FOLDER', 'Director IQAC', `Created format folder: ${newFolder.title}`);
+  res.json({ success: true, folder: newFolder });
+});
+
+app.delete('/api/format-folders/:id', async (req, res) => {
+  let folders = await getAllFormatFolders();
+  const folder = folders.find(f => f.id === req.params.id);
+
+  // Clean up any yearwise submissions that belonged to this folder
+  try {
+    let yearwise = await getAllYearwiseRecords();
+    const updatedYearwise = yearwise.filter(r => r.folderId !== req.params.id);
+    writeData('yearwise_records.json', updatedYearwise);
+  } catch (e) {
+    console.debug('Yearwise record cleanup notice:', e);
+  }
+
+  folders = folders.filter(f => f.id !== req.params.id);
+  writeData('format_folders.json', folders);
+  deleteFromFirestore('format_folders', req.params.id);
+  logActivity('DELETE_FORMAT_FOLDER', 'Director IQAC', `Deleted format folder: ${folder?.title || req.params.id}`);
+  res.json({ success: true, message: 'Folder deleted.' });
+});
+
+app.post('/api/format-folders/:id/files', async (req, res) => {
+  const { name, url, size, type } = req.body;
+  if (!name || !url) {
+    return res.status(400).json({ error: 'File name and file URL are required.' });
+  }
+  let folders = await getAllFormatFolders();
+  const folder = folders.find(f => f.id === req.params.id);
+  if (!folder) {
+    return res.status(404).json({ error: 'Folder not found.' });
+  }
+  const newFile = {
+    id: `file-${Date.now()}`,
+    name: name.trim(),
+    url: url,
+    size: size || 'Unknown size',
+    type: type || getMimeType(name),
+    uploadedAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+  };
+  if (!folder.files) folder.files = [];
+  folder.files.push(newFile);
+  writeData('format_folders.json', folders);
+  syncToFirestore('format_folders', folder.id, folder);
+  logActivity('ADD_FORMAT_FILE', 'Director IQAC', `Added format file ${newFile.name} to ${folder.title}`);
+  res.json({ success: true, file: newFile, folder });
+});
+
+app.delete('/api/format-folders/:id/files/:fileId', async (req, res) => {
+  let folders = await getAllFormatFolders();
+  const folder = folders.find(f => f.id === req.params.id);
+  if (!folder) {
+    return res.status(404).json({ error: 'Folder not found.' });
+  }
+  folder.files = (folder.files || []).filter(f => f.id !== req.params.fileId);
+  writeData('format_folders.json', folders);
+  syncToFirestore('format_folders', folder.id, folder);
+  res.json({ success: true, message: 'File deleted from folder.', folder });
+});
+
+// Yearwise Submissions API (2023-2024 to 2026-2027)
+app.get('/api/yearwise-records', async (req, res) => {
+  let records = await getAllYearwiseRecords();
 
   const { departmentId, academicYear } = req.query;
   if (departmentId) {
@@ -978,8 +1016,8 @@ app.get('/api/yearwise-records', async (req, res) => {
   res.json(records);
 });
 
-app.post('/api/yearwise-records', (req, res) => {
-  let records = readData('yearwise_records.json') || [];
+app.post('/api/yearwise-records', async (req, res) => {
+  let records = await getAllYearwiseRecords();
   const body = req.body;
   const targetFolderId = body.folderId || 'general';
   const existingIndex = records.findIndex(r =>
@@ -1058,11 +1096,22 @@ app.post('/api/yearwise-records', (req, res) => {
 });
 
 // Delete specific uploaded response file from folder
-app.delete('/api/yearwise-records/:id/files/:filename', (req, res) => {
-  let records = readData('yearwise_records.json') || [];
+app.delete('/api/yearwise-records/:id/files/:filename', async (req, res) => {
+  let records = await getAllYearwiseRecords();
   const rec = records.find(r => r.id === req.params.id);
   if (!rec) return res.status(404).json({ error: 'Record not found' });
   const filename = decodeURIComponent(req.params.filename);
+
+  const filesToDelete = (rec.uploadedFiles || []).filter(f => 
+    f.name === filename || f.filename === filename || f.templateFileId === filename
+  );
+  filesToDelete.forEach(f => {
+    const filePath = f.path || (f.filename ? path.join(__dirname, 'uploads', f.filename) : null);
+    if (filePath && fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch (e) {}
+    }
+  });
+
   rec.uploadedFiles = (rec.uploadedFiles || []).filter(f => 
     f.name !== filename && 
     f.filename !== filename && 
@@ -1076,8 +1125,8 @@ app.delete('/api/yearwise-records/:id/files/:filename', (req, res) => {
 });
 
 // Delete entire yearwise record / submission
-app.delete('/api/yearwise-records/:id', (req, res) => {
-  let records = readData('yearwise_records.json') || [];
+app.delete('/api/yearwise-records/:id', async (req, res) => {
+  let records = await getAllYearwiseRecords();
   records = records.filter(r => r.id !== req.params.id);
   writeData('yearwise_records.json', records);
   deleteFromFirestore('yearwise_records', req.params.id);
@@ -1086,18 +1135,18 @@ app.delete('/api/yearwise-records/:id', (req, res) => {
 });
 
 // Clean up orphaned records whose format folders no longer exist
-app.post('/api/admin/clean-orphaned-records', (req, res) => {
-  const folders = readData('format_folders.json') || [];
+app.post('/api/admin/clean-orphaned-records', async (req, res) => {
+  const folders = await getAllFormatFolders();
   const folderIds = new Set(folders.map(f => f.id));
-  let records = readData('yearwise_records.json') || [];
+  let records = await getAllYearwiseRecords();
   const initialCount = records.length;
   records = records.filter(r => folderIds.has(r.folderId));
   writeData('yearwise_records.json', records);
   res.json({ success: true, removedCount: initialCount - records.length, remainingCount: records.length });
 });
 
-app.post('/api/yearwise-records/:id/workflow', (req, res) => {
-  let records = readData('yearwise_records.json') || [];
+app.post('/api/yearwise-records/:id/workflow', async (req, res) => {
+  let records = await getAllYearwiseRecords();
   const index = records.findIndex(r => r.id === req.params.id);
   if (index === -1) {
     return res.status(404).json({ error: 'Yearwise record not found' });
@@ -1161,10 +1210,19 @@ app.post('/api/yearwise-records/:id/workflow', (req, res) => {
     // Delete existing response files so coordinator must re-upload
     if (Array.isArray(rec.uploadedFiles)) {
       rec.uploadedFiles.forEach(f => {
-        if (f && f.path && fs.existsSync(f.path)) {
-          try { fs.unlinkSync(f.path); } catch (e) {}
+        if (f) {
+          const filePath = f.path || (f.filename ? path.join(__dirname, 'uploads', f.filename) : null);
+          if (filePath && fs.existsSync(filePath)) {
+            try { fs.unlinkSync(filePath); } catch (e) {}
+          }
         }
       });
+    }
+    if (rec.excelFile) {
+      const efPath = rec.excelFile.path || (rec.excelFile.filename ? path.join(__dirname, 'uploads', rec.excelFile.filename) : null);
+      if (efPath && fs.existsSync(efPath)) {
+        try { fs.unlinkSync(efPath); } catch (e) {}
+      }
     }
     rec.uploadedFiles = [];
     rec.excelFile = null;

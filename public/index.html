@@ -249,7 +249,7 @@
   <!-- ==========================================================================
        iOS Modal Sheet (Workflow Approvals / Notes)
        ========================================================================== -->
-  <div class="ios-modal-overlay" id="workflow-modal-overlay" style="display: none;">
+  <div class="ios-modal-overlay" id="workflow-modal-overlay" style="display: none;" onclick="if(event.target === this) closeModal()">
     <div class="ios-modal-sheet" id="workflow-modal-content">
       <!-- Injected dynamically -->
     </div>

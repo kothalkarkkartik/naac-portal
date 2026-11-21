@@ -56,7 +56,8 @@ window.showConfirmDialog = function({ title, message, confirmText = 'Yes, Delete
   }
 
   content.innerHTML = `
-    <div style="padding: 24px 20px; text-align: center;">
+    <div style="padding: 26px 22px; text-align: center; position: relative;">
+      <button class="ios-modal-close" style="position: absolute; top: 12px; right: 12px;" onclick="window.closeModal()" title="Cancel dialog">&times;</button>
       <div style="width: 58px; height: 58px; border-radius: 50%; background: #FEE2E2; color: #DC2626; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 16px auto;">
         <i class="fas fa-trash-alt"></i>
       </div>
@@ -82,6 +83,203 @@ window.showConfirmDialog = function({ title, message, confirmText = 'Yes, Delete
       }
     };
   }
+};
+
+// ==========================================================================
+// LIVE UPLOAD PROGRESS OVERLAY & MONITOR
+// ==========================================================================
+window.showUploadProgress = function({ fileName, fileSize }) {
+  window._uploadIsDone = false;
+  window._uploadIsError = false;
+
+  let overlay = document.getElementById('global-upload-modal-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'global-upload-modal-overlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 999999; display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.2s ease;
+    `;
+    overlay.onclick = function(e) {
+      if (e.target === overlay && (window._uploadIsDone || window._uploadIsError)) {
+        window.closeUploadProgress();
+      }
+    };
+    document.body.appendChild(overlay);
+  }
+
+  const iconInfo = window.getFileIconInfo ? window.getFileIconInfo(fileName) : { icon: 'fa-file', color: '#2563EB' };
+
+  overlay.innerHTML = `
+    <div class="upload-modal-sheet">
+      <!-- Close Button -->
+      <button type="button" class="upload-modal-close-btn" onclick="window.closeUploadProgress()" title="Close">&times;</button>
+      
+      <!-- Top Animated Status Circle -->
+      <div id="upload-progress-icon-box" style="width: 76px; height: 76px; border-radius: 50%; background: #EFF6FF; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; position: relative; transition: all 0.3s ease;">
+        <i id="upload-progress-icon" class="fas fa-cloud-upload-alt" style="font-size: 32px; color: #2563EB;"></i>
+        <div id="upload-progress-spinner" style="position: absolute; inset: -4px; border: 3.5px solid #DBEAFE; border-top-color: #2563EB; border-radius: 50%; animation: spin 0.9s linear infinite;"></div>
+      </div>
+
+      <!-- Title & File Metadata -->
+      <h3 id="upload-progress-title" style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0 0 6px 0; letter-spacing: -0.2px;">Uploading File...</h3>
+      <div id="upload-progress-filename" style="font-size: 13.5px; font-weight: 700; color: #1E40AF; max-width: 360px; margin: 0 auto 4px auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <i class="fas ${iconInfo.icon}" style="color: ${iconInfo.color}; margin-right: 5px;"></i>
+        <span>${fileName || 'document'}</span>
+      </div>
+      <div id="upload-progress-filesize" style="font-size: 12px; font-weight: 600; color: #64748B; margin-bottom: 20px;">
+        ${fileSize || 'Calculating size...'}
+      </div>
+
+      <!-- Live Progress Bar Track -->
+      <div style="background: #F1F5F9; border: 1.5px solid #E2E8F0; border-radius: 999px; height: 12px; overflow: hidden; margin-bottom: 12px; position: relative;">
+        <div id="upload-progress-bar" class="upload-progress-animated-bar" style="height: 100%; width: 15%; border-radius: 999px;"></div>
+      </div>
+
+      <!-- Live Status Description -->
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700;">
+        <span id="upload-progress-status" style="color: #475569; display: inline-flex; align-items: center; gap: 6px;">
+          <i class="fas fa-spinner fa-spin" style="color: #2563EB;"></i>
+          <span>Uploading to cloud repository...</span>
+        </span>
+        <span id="upload-progress-percent" style="color: #1E40AF; font-weight: 800;">15%</span>
+      </div>
+
+      <div id="upload-progress-action-area" style="margin-top: 18px; display: none;"></div>
+    </div>
+  `;
+
+  overlay.style.display = 'flex';
+};
+
+window.updateUploadProgress = function({ percent, statusText, isDone, isError, errorText }) {
+  const bar = document.getElementById('upload-progress-bar');
+  const percentEl = document.getElementById('upload-progress-percent');
+  const statusEl = document.getElementById('upload-progress-status');
+  const titleEl = document.getElementById('upload-progress-title');
+  const iconBox = document.getElementById('upload-progress-icon-box');
+  const iconEl = document.getElementById('upload-progress-icon');
+  const spinnerEl = document.getElementById('upload-progress-spinner');
+  const actionArea = document.getElementById('upload-progress-action-area');
+
+  if (percent !== undefined) {
+    const p = Math.min(100, Math.max(0, percent));
+    if (bar) bar.style.width = `${p}%`;
+    if (percentEl) percentEl.textContent = `${p}%`;
+  }
+
+  if (statusText && statusEl) {
+    statusEl.innerHTML = `<i class="fas fa-spinner fa-spin" style="color: #2563EB;"></i> <span>${statusText}</span>`;
+  }
+
+  if (isDone) {
+    window._uploadIsDone = true;
+    if (bar) {
+      bar.style.width = '100%';
+      bar.style.background = 'linear-gradient(90deg, #10B981, #059669)';
+    }
+    if (percentEl) {
+      percentEl.textContent = '100%';
+      percentEl.style.color = '#15803D';
+    }
+    if (titleEl) {
+      titleEl.innerHTML = '<span style="color: #15803D;">✓ Upload Complete!</span>';
+    }
+    if (iconBox) {
+      iconBox.style.background = '#DCFCE7';
+    }
+    if (spinnerEl) {
+      spinnerEl.style.display = 'none';
+    }
+    if (iconEl) {
+      iconEl.className = 'fas fa-check-circle';
+      iconEl.style.color = '#16A34A';
+      iconEl.style.fontSize = '38px';
+    }
+    if (statusEl) {
+      statusEl.innerHTML = '<span style="color: #15803D; font-weight: 800;"><i class="fas fa-check"></i> Verified & saved in repository!</span>';
+    }
+  }
+
+  if (isError) {
+    window._uploadIsError = true;
+    if (bar) bar.style.background = '#EF4444';
+    if (titleEl) titleEl.innerHTML = '<span style="color: #DC2626;">Upload Failed</span>';
+    if (iconBox) iconBox.style.background = '#FEE2E2';
+    if (spinnerEl) spinnerEl.style.display = 'none';
+    if (iconEl) {
+      iconEl.className = 'fas fa-circle-exclamation';
+      iconEl.style.color = '#DC2626';
+    }
+    if (statusEl) {
+      statusEl.innerHTML = `<span style="color: #B91C1C;">${errorText || 'Error processing upload. Please retry.'}</span>`;
+    }
+    if (actionArea) {
+      actionArea.style.display = 'block';
+      actionArea.innerHTML = `
+        <button type="button" class="ios-btn" style="background: #0F172A; color: #FFF; font-size: 13px; font-weight: 800; padding: 9px 22px; border-radius: 9px;" onclick="window.closeUploadProgress()">
+          Close
+        </button>
+      `;
+    }
+  }
+};
+
+window.closeUploadProgress = function() {
+  const overlay = document.getElementById('global-upload-modal-overlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+  }
+};
+
+window.uploadFileWithLiveProgress = function(file) {
+  return new Promise((resolve, reject) => {
+    const humanSize = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+    window.showUploadProgress({ fileName: file.name, fileSize: humanSize });
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload');
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        // Map upload bytes to 10% - 85% range
+        const pct = Math.round(10 + (e.loaded / e.total) * 75);
+        window.updateUploadProgress({ percent: pct, statusText: `Transferring file (${Math.round((e.loaded / (1024 * 1024)) * 100) / 100} MB of ${humanSize})...` });
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          window.updateUploadProgress({ percent: 92, statusText: 'Syncing to institutional cloud database...' });
+          resolve(data);
+        } catch (err) {
+          window.updateUploadProgress({ isError: true, errorText: 'Invalid response from server.' });
+          reject(err);
+        }
+      } else {
+        let msg = `Server returned status ${xhr.status}`;
+        try {
+          const errData = JSON.parse(xhr.responseText);
+          if (errData && errData.error) msg = errData.error;
+        } catch (e) {}
+        window.updateUploadProgress({ isError: true, errorText: msg });
+        reject(new Error(msg));
+      }
+    };
+
+    xhr.onerror = () => {
+      window.updateUploadProgress({ isError: true, errorText: 'Network connection error during upload.' });
+      reject(new Error('Network error'));
+    };
+
+    const formData = new FormData();
+    formData.append('file', file);
+    xhr.send(formData);
+  });
 };
 
 // Prevent unhandled promise rejections or script errors from showing debug toast overlays
@@ -357,20 +555,53 @@ async function renderActiveView() {
   }
 }
 
+// Helper for Dynamic Multi-Format File Icons
+window.getFileIconInfo = function(fileName) {
+  const name = (fileName || '').toLowerCase();
+  if (name.endsWith('.pdf')) {
+    return { icon: 'fa-file-pdf', color: '#DC2626', label: 'PDF' };
+  }
+  if (name.match(/\.(xlsx?|xlsm|xlsb|csv|ods|tsv)$/)) {
+    return { icon: 'fa-file-excel', color: '#16A34A', label: 'Spreadsheet' };
+  }
+  if (name.match(/\.(docx?|rtf|odt|doc)$/)) {
+    return { icon: 'fa-file-word', color: '#2563EB', label: 'Word Document' };
+  }
+  if (name.match(/\.(pptx?|odp)$/)) {
+    return { icon: 'fa-file-powerpoint', color: '#EA580C', label: 'Presentation' };
+  }
+  if (name.match(/\.(png|jpe?g|webp|gif|svg|bmp)$/)) {
+    return { icon: 'fa-file-image', color: '#8B5CF6', label: 'Image' };
+  }
+  if (name.match(/\.(zip|rar|7z|tar|gz)$/)) {
+    return { icon: 'fa-file-archive', color: '#D97706', label: 'Archive' };
+  }
+  if (name.match(/\.(txt|log|md|json)$/)) {
+    return { icon: 'fa-file-alt', color: '#64748B', label: 'Text Document' };
+  }
+  return { icon: 'fa-file', color: '#64748B', label: 'File' };
+};
+
 // ==========================================================================
 // FOLDER PROGRESS & STATUS ENGINE
 // ==========================================================================
 window.getFolderProgress = function(fld, fldRec) {
   const total = (fld && fld.files && fld.files.length) ? fld.files.length : 1;
-  const uploadedFiles = fldRec ? ((fldRec.uploadedFiles && fldRec.uploadedFiles.length) ? fldRec.uploadedFiles : (fldRec.excelFile ? [fldRec.excelFile] : [])) : [];
+  const isRejected = fldRec && (fldRec.status === 'returned_for_revision' || fldRec.status === 'rejected');
+
+  // When rejected or returned for revision, previously submitted response files are deleted
+  const rawFiles = fldRec ? ((fldRec.uploadedFiles && fldRec.uploadedFiles.length) ? fldRec.uploadedFiles : (fldRec.excelFile ? [fldRec.excelFile] : [])) : [];
+  const uploadedFiles = isRejected ? [] : rawFiles;
   
   let completed = 0;
-  if (fld && fld.files && fld.files.length > 0) {
-    completed = fld.files.filter((tf, idx) => {
-      return uploadedFiles.some(uf => uf.templateFileId === tf.id || (!uf.templateFileId && idx === 0));
-    }).length;
-  } else {
-    completed = uploadedFiles.length > 0 ? 1 : 0;
+  if (!isRejected) {
+    if (fld && fld.files && fld.files.length > 0) {
+      completed = fld.files.filter((tf, idx) => {
+        return uploadedFiles.some(uf => uf.templateFileId === tf.id || (!uf.templateFileId && idx === 0));
+      }).length;
+    } else {
+      completed = uploadedFiles.length > 0 ? 1 : 0;
+    }
   }
   
   const pending = Math.max(0, total - completed);
@@ -638,8 +869,53 @@ function renderCoordinatorYearwiseWorkspace(container) {
                 </div>
 
                 ${!hasTemplate ? `
-                  <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 8px; padding: 14px; font-size: 13px; color: #64748B; font-weight: 600;">
-                    <i class="fas fa-clock" style="color: #D97706; margin-right: 6px;"></i> Admin IQAC has not released a template in this folder yet.
+                  <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 16px 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                      <div>
+                        <div style="font-size: 13px; font-weight: 800; color: #1E293B; display: flex; align-items: center; gap: 6px;">
+                          <i class="fas fa-info-circle" style="color: #2563EB;"></i>
+                          <span>No official template released yet by Admin IQAC</span>
+                        </div>
+                        <div style="font-size: 11.5px; color: #64748B; font-weight: 600; margin-top: 3px;">
+                          You can upload your department's response file (.xlsx, .xls, .docx, .pdf, or any format) directly into this folder.
+                        </div>
+                      </div>
+                      <div>
+                        <input type="file" id="direct-upload-input-${fld.id}-direct" accept="*/*" style="display: none;" onchange="handleFolderUpload('${fld.id}', event, 'direct-upload-input-${fld.id}-direct', 'direct-upload', 'Department Response File')" />
+                        <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #FFF; font-size: 12px; font-weight: 800; padding: 8px 18px; border-radius: 8px; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3); display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('direct-upload-input-${fld.id}-direct').click()">
+                          <i class="fas fa-cloud-upload-alt"></i> Upload Response File
+                        </button>
+                      </div>
+                    </div>
+
+                    ${(prog.uploadedFiles && prog.uploadedFiles.length > 0) ? `
+                      <div style="margin-top: 14px; padding-top: 14px; border-top: 1.5px solid #E2E8F0;">
+                        ${prog.uploadedFiles.map(respFile => `
+                          <div style="display: flex; justify-content: space-between; align-items: center; background: #F0FDF4; border: 1.5px solid #86EFAC; border-radius: 10px; padding: 12px 16px; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                              <i class="fas fa-check-circle" style="color: #16A34A; font-size: 20px;"></i>
+                              <div>
+                                <div style="font-size: 13.5px; font-weight: 800; color: #15803D;">✓ ${respFile.name} <span style="font-size: 11px; font-weight: 600; color: #64748B;">(${respFile.size})</span></div>
+                                <div style="font-size: 11.5px; color: #475569; font-weight: 600; margin-top: 2px;">
+                                  Uploaded: ${respFile.uploadDate || 'Recent'} by <strong>${respFile.author || state.currentUser.name}</strong>
+                                </div>
+                              </div>
+                            </div>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                              <button type="button" class="ios-btn" style="background: #2563EB; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px;" onclick="openFileViewer('${encodeURIComponent(JSON.stringify(respFile))}', '${respFile.name}')">
+                                <i class="fas fa-eye"></i> View
+                              </button>
+                              <a href="${getFileDownloadUrl(respFile)}" download="${respFile.name}" target="_blank" class="ios-btn" style="background: #16A34A; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; text-decoration: none;">
+                                <i class="fas fa-download"></i> Download
+                              </a>
+                              <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; font-size: 11px; font-weight: 800; padding: 6px 10px; border-radius: 8px;" onclick="handleDeleteUploadedFile('${fldRec?.id}', '${encodeURIComponent(respFile.name)}', '${fld.id}', 'direct-upload')">
+                                <i class="fas fa-trash-alt"></i>
+                              </button>
+                            </div>
+                          </div>
+                        `).join('')}
+                      </div>
+                    ` : ''}
                   </div>
                 ` : `
                   <div style="display: grid; gap: 14px;">
@@ -655,11 +931,16 @@ function renderCoordinatorYearwiseWorkspace(container) {
                           
                           <!-- Top Strip: Official Template Information & Download Button -->
                           <div style="display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; padding: 12px 16px; border-bottom: 1.5px solid ${hasResp ? '#BBF7D0' : '#E2E8F0'}; flex-wrap: wrap; gap: 10px;">
-                            <span style="font-size: 13.5px; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 10px;">
-                              <i class="fas ${file.name.endsWith('.pdf') ? 'fa-file-pdf' : (file.name.match(/\.(xlsx?|csv)$/) ? 'fa-file-excel' : 'fa-file-word')}" style="color: ${file.name.endsWith('.pdf') ? '#DC2626' : '#16A34A'}; font-size: 20px;"></i>
-                              <span>${file.name}</span>
-                              <span style="font-size: 11.5px; color: #64748B; font-weight: 600;">(${file.size || 'Official Template'})</span>
-                            </span>
+                            ${(() => {
+                              const tplIcon = window.getFileIconInfo(file.name);
+                              return `
+                                <span style="font-size: 13.5px; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 10px;">
+                                  <i class="fas ${tplIcon.icon}" style="color: ${tplIcon.color}; font-size: 20px;"></i>
+                                  <span>${file.name}</span>
+                                  <span style="font-size: 11.5px; color: #64748B; font-weight: 600;">(${file.size || 'Official Template'})</span>
+                                </span>
+                              `;
+                            })()}
                             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                               <button type="button" class="ios-btn" style="background: #EFF6FF; border: 1.5px solid #BFDBFE; color: #1D4ED8; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;" onclick="openFileViewer('${encodeURIComponent(JSON.stringify(file))}', 'Official Template: ${file.name}')">
                                 <i class="fas fa-eye"></i> View Template
@@ -710,7 +991,7 @@ function renderCoordinatorYearwiseWorkspace(container) {
                                 <a href="${getFileDownloadUrl(respFile)}" download="${respFile.name}" target="_blank" class="ios-btn" style="background: #16A34A; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
                                   <i class="fas fa-download"></i> Download
                                 </a>
-                                <input type="file" id="direct-upload-input-${fld.id}-${file.id}" accept=".xlsx,.xls,.docx,.pdf,.csv" style="display: none;" onchange="handleFolderUpload('${fld.id}', event, 'direct-upload-input-${fld.id}-${file.id}', '${file.id}', '${encodeURIComponent(file.name)}')" />
+                                <input type="file" id="direct-upload-input-${fld.id}-${file.id}" accept="*/*" style="display: none;" onchange="handleFolderUpload('${fld.id}', event, 'direct-upload-input-${fld.id}-${file.id}', '${file.id}', '${encodeURIComponent(file.name)}')" />
                                 <button type="button" class="ios-btn" style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;" onclick="document.getElementById('direct-upload-input-${fld.id}-${file.id}').click()" title="Replace response file for this template">
                                   <i class="fas fa-sync-alt"></i> Replace
                                 </button>
@@ -725,11 +1006,11 @@ function renderCoordinatorYearwiseWorkspace(container) {
                                 <i class="fas fa-clock" style="color: #D97706; font-size: 20px;"></i>
                                 <div>
                                   <div style="font-size: 13px; font-weight: 800; color: #92400E;">○ Response Pending for this Template</div>
-                                  <div style="font-size: 11px; color: #B45309; font-weight: 600;">Download official template above, fill metrics, and upload completed response file here.</div>
+                                  <div style="font-size: 11px; color: #B45309; font-weight: 600;">Download official template above, fill metrics, and upload completed response file here (all formats supported).</div>
                                 </div>
                               </div>
                               <div>
-                                <input type="file" id="direct-upload-input-${fld.id}-${file.id}" accept=".xlsx,.xls,.docx,.pdf,.csv" style="display: none;" onchange="handleFolderUpload('${fld.id}', event, 'direct-upload-input-${fld.id}-${file.id}', '${file.id}', '${encodeURIComponent(file.name)}')" />
+                                <input type="file" id="direct-upload-input-${fld.id}-${file.id}" accept="*/*" style="display: none;" onchange="handleFolderUpload('${fld.id}', event, 'direct-upload-input-${fld.id}-${file.id}', '${file.id}', '${encodeURIComponent(file.name)}')" />
                                 <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #FFF; font-size: 12px; font-weight: 800; padding: 7px 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3); display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('direct-upload-input-${fld.id}-${file.id}').click()" title="Upload completed response for this template">
                                   <i class="fas fa-cloud-upload-alt"></i> Upload Response
                                 </button>
@@ -949,16 +1230,15 @@ window.handleFolderUpload = async function(folderId, event, customInputId, templ
   }
 
   const file = fileInput.files[0];
-  const formData = new FormData();
-  formData.append('file', file);
 
   try {
-    showToast('Uploading completed response to cloud...', 'info');
-    const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData }).then(r => r.json());
-    if (!uploadRes.success) {
+    const uploadRes = await window.uploadFileWithLiveProgress(file);
+    if (!uploadRes || !uploadRes.success) {
+      window.updateUploadProgress({ isError: true, errorText: uploadRes?.error || 'Unable to upload file. Please retry.' });
       showToast('Unable to upload file. Please retry.', 'error');
       return;
     }
+    window.updateUploadProgress({ percent: 96, statusText: 'Saving response record to database...' });
 
     const deptId = state.currentUser.departmentId;
     const year = state.selectedAcademicYear;
@@ -1012,12 +1292,19 @@ window.handleFolderUpload = async function(folderId, event, customInputId, templ
     }).then(r => r.json());
 
     if (saveRes.success) {
+      window.updateUploadProgress({ isDone: true });
+      setTimeout(() => {
+        window.closeUploadProgress();
+      }, 700);
       showToast(`Response file "${uploadRes.file.name}" uploaded successfully!`, 'success');
       await loadInitialData();
       renderActiveView();
+    } else {
+      window.updateUploadProgress({ isError: true, errorText: saveRes.error || 'Failed to save record.' });
     }
   } catch (err) {
     console.debug('Folder upload error:', err);
+    window.updateUploadProgress({ isError: true, errorText: err.message || 'File upload failed. Please retry.' });
     showToast('File upload failed. Please retry.', 'error');
   }
 };
@@ -1043,6 +1330,32 @@ window.handleDeleteUploadedFile = async function(recId, filename, folderId, temp
         }
       } catch (err) {
         showToast('Failed to remove file.', 'error');
+      }
+    }
+  });
+};
+
+window.handleAdminDeleteResponseFile = async function(recId, filename, folderId, templateFileId) {
+  const cleanName = decodeURIComponent(filename);
+  window.showConfirmDialog({
+    title: `Delete Department Response File?`,
+    message: `Are you sure you want to delete the submitted file "${cleanName}"? The official format template will NOT be touched.`,
+    confirmText: 'Yes, Delete Response',
+    onConfirm: async () => {
+      try {
+        const deleteTarget = templateFileId || encodeURIComponent(cleanName);
+        const res = await fetch(`/api/yearwise-records/${recId}/files/${deleteTarget}`, {
+          method: 'DELETE'
+        }).then(r => r.json());
+        if (res.success) {
+          showToast(`Response file "${cleanName}" removed. Template remains safe.`, 'success');
+          await loadInitialData();
+          renderActiveView();
+        } else {
+          showToast(res.error || 'Failed to remove response file.', 'error');
+        }
+      } catch (err) {
+        showToast('Failed to remove response file.', 'error');
       }
     }
   });
@@ -1161,15 +1474,15 @@ window.handleYearwiseExcelUpload = async function() {
   }
 
   const file = fileInput.files[0];
-  const formData = new FormData();
-  formData.append('file', file);
 
   try {
-    const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData }).then(r => r.json());
-    if (!uploadRes.success) {
+    const uploadRes = await window.uploadFileWithLiveProgress(file);
+    if (!uploadRes || !uploadRes.success) {
+      window.updateUploadProgress({ isError: true, errorText: uploadRes?.error || 'Unable to upload sheet. Please verify and retry.' });
       showToast('Unable to upload sheet. Please verify the file and retry.', 'error');
       return;
     }
+    window.updateUploadProgress({ percent: 96, statusText: 'Saving academic year record...' });
 
     const deptId = state.currentUser.departmentId;
     const year = state.selectedAcademicYear;
@@ -1190,12 +1503,19 @@ window.handleYearwiseExcelUpload = async function() {
     }).then(r => r.json());
 
     if (saveRes.success) {
+      window.updateUploadProgress({ isDone: true });
+      setTimeout(() => {
+        window.closeUploadProgress();
+      }, 700);
       showToast(`Excel sheet for Academic Year ${year} uploaded successfully!`, 'success');
       await loadInitialData();
       renderActiveView();
+    } else {
+      window.updateUploadProgress({ isError: true, errorText: saveRes.error || 'Failed to update academic record.' });
     }
   } catch (err) {
     console.debug('Upload notice:', err);
+    window.updateUploadProgress({ isError: true, errorText: err.message || 'Sheet upload failed. Please retry.' });
     showToast('File upload could not be processed. Please retry.', 'error');
   }
 };
@@ -1624,23 +1944,26 @@ function renderAdminMasterTemplateManager(container) {
                     </div>
                   ` : `
                     <div style="display: grid; gap: 8px;">
-                      ${fld.files.map(file => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: #FFF; border: 1.5px solid #CBD5E1; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700;">
-                          <span style="display: flex; align-items: center; gap: 10px;">
-                            <i class="fas ${file.name.endsWith('.pdf') ? 'fa-file-pdf' : (file.name.match(/\.(xlsx?|csv)$/) ? 'fa-file-excel' : 'fa-file-word')}" style="color: ${file.name.endsWith('.pdf') ? '#DC2626' : '#16A34A'}; font-size: 18px;"></i>
-                            <strong style="color: #0F172A;">${file.name}</strong>
-                            <span style="font-size: 11.5px; font-weight: 600; color: #64748B;">(${file.size}) • Uploaded: ${file.uploadedAt}</span>
-                          </span>
-                          <div style="display: flex; gap: 8px; align-items: center;">
-                            <a href="${getFileDownloadUrl(file)}" download="${file.name}" target="_blank" class="ios-btn" style="background: #DCFCE7; color: #15803D; border: 1.5px solid #86EFAC; font-size: 11.5px; font-weight: 800; padding: 5px 12px; border-radius: 8px; text-decoration: none;">
-                              <i class="fas fa-download"></i> Download
-                            </a>
-                            <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11px; font-weight: 800; padding: 5px 9px; border-radius: 8px;" title="Delete this file" onclick="handleDeleteFileFromFolder('${fld.id}', '${file.id}')">
-                              <i class="fas fa-times"></i>
-                            </button>
+                      ${fld.files.map(file => {
+                        const fileIcon = window.getFileIconInfo(file.name);
+                        return `
+                          <div style="display: flex; justify-content: space-between; align-items: center; background: #FFF; border: 1.5px solid #CBD5E1; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 700;">
+                            <span style="display: flex; align-items: center; gap: 10px;">
+                              <i class="fas ${fileIcon.icon}" style="color: ${fileIcon.color}; font-size: 18px;"></i>
+                              <strong style="color: #0F172A;">${file.name}</strong>
+                              <span style="font-size: 11.5px; font-weight: 600; color: #64748B;">(${file.size}) • Uploaded: ${file.uploadedAt}</span>
+                            </span>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                              <a href="${getFileDownloadUrl(file)}" download="${file.name}" target="_blank" class="ios-btn" style="background: #DCFCE7; color: #15803D; border: 1.5px solid #86EFAC; font-size: 11.5px; font-weight: 800; padding: 5px 12px; border-radius: 8px; text-decoration: none;">
+                                <i class="fas fa-download"></i> Download
+                              </a>
+                              <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11px; font-weight: 800; padding: 5px 9px; border-radius: 8px;" title="Delete this file" onclick="handleDeleteFileFromFolder('${fld.id}', '${file.id}')">
+                                <i class="fas fa-times"></i>
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      `).join('')}
+                        `;
+                      }).join('')}
                     </div>
                   `}
                 </div>
@@ -1648,9 +1971,9 @@ function renderAdminMasterTemplateManager(container) {
                 <!-- Upload New File to this Specific Folder -->
                 <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: #FFF; border: 1.5px dashed #CBD5E1; padding: 10px 14px; border-radius: 10px;">
                   <span style="font-size: 12px; font-weight: 800; color: #1E293B;">
-                    <i class="fas fa-cloud-upload-alt" style="color: #16A34A;"></i> Add File to this Folder:
+                    <i class="fas fa-cloud-upload-alt" style="color: #16A34A;"></i> Add File to this Folder (All Formats Supported):
                   </span>
-                  <input type="file" id="folder-upload-input-${fld.id}" class="ios-input" accept=".xlsx,.xls,.docx,.doc,.pdf,.csv" style="width: auto; padding: 7px 12px; font-size: 12px; font-weight: 700;" />
+                  <input type="file" id="folder-upload-input-${fld.id}" class="ios-input" accept="*/*" style="width: auto; padding: 7px 12px; font-size: 12px; font-weight: 700;" />
                   <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #10B981 0%, #047857 100%); color: #FFF; font-size: 12.5px; font-weight: 800; padding: 8px 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);" onclick="handleUploadFileToFolder('${fld.id}')">
                     <i class="fas fa-plus"></i> Upload File into "${fld.title}"
                   </button>
@@ -1858,19 +2181,16 @@ window.handleUploadFileToFolder = async function(folderId) {
   }
 
   const file = fileInput.files[0];
-  const formData = new FormData();
-  formData.append('file', file);
 
   try {
-    const uploadRes = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData
-    }).then(r => r.json());
-
-    if (!uploadRes.success) {
+    const uploadRes = await window.uploadFileWithLiveProgress(file);
+    if (!uploadRes || !uploadRes.success) {
+      window.updateUploadProgress({ isError: true, errorText: uploadRes?.error || 'File upload failed. Please retry.' });
       showToast('File upload failed. Please try again.', 'error');
       return;
     }
+
+    window.updateUploadProgress({ percent: 96, statusText: 'Attaching template to format folder...' });
 
     const payload = {
       name: file.name,
@@ -1886,15 +2206,21 @@ window.handleUploadFileToFolder = async function(folderId) {
     }).then(r => r.json());
 
     if (addRes.success) {
+      window.updateUploadProgress({ isDone: true });
+      setTimeout(() => {
+        window.closeUploadProgress();
+      }, 700);
       showToast(`File "${file.name}" added to folder successfully!`, 'success');
       fileInput.value = '';
       await loadInitialData();
       renderActiveView();
     } else {
+      window.updateUploadProgress({ isError: true, errorText: addRes.error || 'Unable to save file to folder.' });
       showToast('Unable to save file to folder.', 'error');
     }
   } catch (err) {
     console.debug('File upload notice:', err);
+    window.updateUploadProgress({ isError: true, errorText: err.message || 'Unable to upload file to folder.' });
     showToast('Unable to upload file to folder.', 'error');
   }
 };
@@ -2313,8 +2639,24 @@ function renderAdminDepartmentFolders(container) {
                                 <button type="button" class="ios-btn" style="background: #1E293B; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;" onclick="openAdminYearInspectModal('${fldRec.id}')">
                                   <i class="fas fa-search-plus"></i> Audit & Verify
                                 </button>
+                                <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11px; font-weight: 800; padding: 6px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;" onclick="handleAdminDeleteResponseFile('${fldRec.id}', '${encodeURIComponent(respFile.name)}', '${fld.id}', '${respFile.templateFileId || ''}')" title="Delete ONLY this response file (Keeps template safe)">
+                                  <i class="fas fa-trash-alt"></i> Delete Response Only
+                                </button>
                               ` : ''}
                             </div>
+                          </div>
+                        ` : (isRejected ? `
+                          <div style="display: flex; justify-content: space-between; align-items: center; background: #FFF1F2; padding: 12px 16px; flex-wrap: wrap; gap: 10px; border-top: 1.5px dashed #FDA4AF;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                              <i class="fas fa-trash-alt" style="color: #E11D48; font-size: 20px;"></i>
+                              <div>
+                                <div style="font-size: 13px; font-weight: 800; color: #9F1239;">Response File Automatically Deleted Upon Rejection</div>
+                                <div style="font-size: 11px; color: #BE123C; font-weight: 600;">The official template above is 100% safe. Coordinator will re-upload revised file.</div>
+                              </div>
+                            </div>
+                            <span class="ios-status-tag" style="background: #FFE4E6; color: #E11D48; border: 1.5px solid #FDA4AF; font-size: 11.5px; font-weight: 800;">
+                              <i class="fas fa-undo"></i> Awaiting Re-Upload
+                            </span>
                           </div>
                         ` : `
                           <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFBEB; padding: 12px 16px; flex-wrap: wrap; gap: 10px;">
@@ -2329,7 +2671,7 @@ function renderAdminDepartmentFolders(container) {
                               Pending Coordinator
                             </span>
                           </div>
-                        `}
+                        `)}
                       </div>
                     `;
                   }).join('')}
@@ -3977,10 +4319,24 @@ window.closeFileViewer = function() {
   if (content) content.innerHTML = '';
 };
 
-// Close viewer on Escape key
+// Universal Close for all modals and dialogs on Escape key
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    window.closeFileViewer();
+    const fileViewer = document.getElementById('file-viewer-overlay');
+    if (fileViewer && fileViewer.style.display !== 'none') {
+      window.closeFileViewer();
+      return;
+    }
+    const workflowModal = document.getElementById('workflow-modal-overlay');
+    if (workflowModal && workflowModal.style.display !== 'none') {
+      window.closeModal();
+      return;
+    }
+    const uploadOverlay = document.getElementById('global-upload-modal-overlay');
+    if (uploadOverlay && uploadOverlay.style.display !== 'none') {
+      window.closeUploadProgress();
+      return;
+    }
   }
 });
 
@@ -4012,11 +4368,13 @@ window.openFileViewer = async function(fileOrPayload, customTitle) {
 
   overlay.style.display = 'flex';
 
+  const fileIconInfo = window.getFileIconInfo ? window.getFileIconInfo(filename) : { icon: 'fa-file', color: '#38BDF8' };
+
   // Loading indicator
   content.innerHTML = `
     <div class="file-viewer-head">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <i class="fas fa-file-excel" style="font-size: 20px; color: #38BDF8;"></i>
+        <i class="fas ${fileIconInfo.icon}" style="font-size: 20px; color: ${fileIconInfo.color};"></i>
         <div>
           <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: #FFF;">${customTitle || filename}</h4>
           <span style="font-size: 11px; color: #94A3B8;">Loading institutional document from repository...</span>
@@ -4027,12 +4385,12 @@ window.openFileViewer = async function(fileOrPayload, customTitle) {
     <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; background: #FFF;">
       <div style="width: 44px; height: 44px; border: 3.5px solid #E2E8F0; border-top-color: #2563EB; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px;"></div>
       <div style="font-size: 15px; font-weight: 800; color: #0F172A;">Opening Document Viewer...</div>
-      <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Parsing spreadsheet cells and format definitions</div>
+      <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Preparing preview and document structure</div>
     </div>
   `;
 
-  // 1. EXCEL SPREADSHEETS (.xlsx, .xls, .csv)
-  if (['xlsx', 'xls', 'csv'].includes(ext)) {
+  // 1. SPREADSHEETS (.xlsx, .xls, .xlsm, .xlsb, .csv, .ods, .tsv)
+  if (['xlsx', 'xls', 'xlsm', 'xlsb', 'csv', 'ods', 'tsv'].includes(ext)) {
     try {
       const resp = await fetch(downloadUrl);
       if (!resp.ok) throw new Error('File download failed');
@@ -4268,10 +4626,50 @@ window.openFileViewer = async function(fileOrPayload, customTitle) {
     return;
   }
 
-  // 4. OTHER DOCUMENTS (e.g. DOCX, TXT)
+  // 4. TEXT & CODE DOCUMENTS (.txt, .log, .json, .md, .xml, .html)
+  if (['txt', 'log', 'json', 'md', 'xml', 'html'].includes(ext)) {
+    try {
+      const resp = await fetch(downloadUrl);
+      const text = await resp.text();
+      content.innerHTML = `
+        <div class="file-viewer-head">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(56,189,248,0.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i class="fas fa-file-alt" style="color: #38BDF8; font-size: 16px;"></i>
+            </div>
+            <div>
+              <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: #FFF;">${customTitle || filename}</h4>
+              <span style="font-size: 11px; color: #94A3B8;">Text Document Viewer • In-Portal</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <a href="${downloadUrl}" download="${filename}" class="ios-btn" style="background: #10B981; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 14px; border-radius: 7px; text-decoration: none;">
+              <i class="fas fa-download"></i> Download
+            </a>
+            <button class="ios-modal-close" style="background: rgba(255,255,255,0.18); color: #FFF;" onclick="closeFileViewer()">&times;</button>
+          </div>
+        </div>
+        <div style="flex: 1; padding: 24px; overflow: auto; background: #0F172A; color: #E2E8F0; font-family: 'Fira Code', Consolas, monospace; font-size: 13px; white-space: pre-wrap; line-height: 1.6;">
+          ${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+        </div>
+      `;
+      return;
+    } catch (e) { }
+  }
+
+  // 5. OTHER DOCUMENTS (Word, PowerPoint, Archives, etc.)
+  const fallbackIcon = window.getFileIconInfo ? window.getFileIconInfo(filename) : { icon: 'fa-file-alt', color: '#2563EB', label: 'Document' };
   content.innerHTML = `
     <div class="file-viewer-head">
-      <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: #FFF;">${customTitle || filename}</h4>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <i class="fas ${fallbackIcon.icon}" style="color: ${fallbackIcon.color}; font-size: 16px;"></i>
+        </div>
+        <div>
+          <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: #FFF;">${customTitle || filename}</h4>
+          <span style="font-size: 11px; color: #94A3B8;">${fallbackIcon.label} • Institutional Repository</span>
+        </div>
+      </div>
       <div style="display: flex; align-items: center; gap: 8px;">
         <a href="${downloadUrl}" download="${filename}" class="ios-btn" style="background: #10B981; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 14px; border-radius: 7px; text-decoration: none;">
           <i class="fas fa-download"></i> Download
@@ -4280,16 +4678,18 @@ window.openFileViewer = async function(fileOrPayload, customTitle) {
       </div>
     </div>
     <div style="padding: 40px; text-align: center; background: #FFF; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-      <i class="fas fa-file-alt" style="font-size: 48px; color: #2563EB; margin-bottom: 14px;"></i>
+      <div style="width: 72px; height: 72px; border-radius: 18px; background: #F8FAFC; border: 2px solid #E2E8F0; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+        <i class="fas ${fallbackIcon.icon}" style="font-size: 36px; color: ${fallbackIcon.color};"></i>
+      </div>
       <h4 style="font-size: 17px; font-weight: 800; color: #0F172A; margin-bottom: 6px;">${filename}</h4>
       <p style="font-size: 13px; color: #64748B; max-width: 440px; margin-bottom: 20px;">
-        Institutional document is ready for scrutiny. You can open it in Microsoft Office or download it to your device.
+        Official ${fallbackIcon.label} is preserved and verified. You can open it in its native application or download a local copy.
       </p>
       <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-        <a href="${viewUrl}" target="_blank" class="ios-btn" style="background: #2563EB; color: #FFF; font-weight: 800; padding: 9px 18px; font-size: 12.5px; border-radius: 8px; text-decoration: none;">
+        <a href="${viewUrl}" target="_blank" class="ios-btn" style="background: #2563EB; color: #FFF; font-weight: 800; padding: 9px 18px; font-size: 12.5px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
           <i class="fas fa-external-link-alt"></i> Open in New Tab
         </a>
-        <a href="${downloadUrl}" download="${filename}" class="ios-btn" style="background: #0F172A; color: #FFF; font-weight: 800; padding: 9px 18px; font-size: 12.5px; border-radius: 8px; text-decoration: none;">
+        <a href="${downloadUrl}" download="${filename}" class="ios-btn" style="background: #0F172A; color: #FFF; font-weight: 800; padding: 9px 18px; font-size: 12.5px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
           <i class="fas fa-download"></i> Download File
         </a>
       </div>

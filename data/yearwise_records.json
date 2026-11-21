@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "id": "yr-ug-cse-2024-2025-fld-1795237774030",
+    "coordinatorRemarks": "",
+    "evidenceFiles": [],
+    "createdAt": "2026-11-21 06:26",
+    "academicYear": "2024-2025",
+    "departmentId": "ug-cse",
+    "folderId": "fld-1795237774030",
+    "author": "kartik kothalkar",
+    "updatedAt": "2026-11-21 08:43",
+    "uploadedFiles": [],
+    "excelFile": null,
+    "rejectedBy": "Director IQAC",
+    "rejectionNotes": "n   bnmbmbmb",
+    "rejectedRole": "admin_coordinator",
+    "rejectedAt": "2026-11-21 08:54",
+    "fileDeletedOnReject": true,
+    "iqacRemarks": "Returned by IQAC: n   bnmbmbmb",
+    "syncedAt": "2026-11-21T08:54:24.102Z",
+    "status": "returned_for_revision"
+  }
+]

@@ -1,18 +1,5 @@
 [
   {
-    "id": "usr-1794824699385",
-    "password": "Zateshop143@",
-    "role": "dept_coordinator",
-    "phone": "",
-    "departmentId": "ug-cse",
-    "name": "kartik kothalkar",
-    "registeredAt": "2026-11-16 10:24",
-    "designation": "Accreditation Coordinator",
-    "email": "kothalkark14@gmail.com",
-    "username": "thekkartik",
-    "syncedAt": "2026-11-16T11:33:56.194Z"
-  },
-  {
     "id": "usr-admin",
     "role": "admin_coordinator",
     "phone": "+91 217 2500219",
