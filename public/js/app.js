@@ -1165,20 +1165,20 @@ function renderCoordinatorYearwiseWorkspace(container) {
               return `
                 <div class="premium-folder-card ${cardClass}" onclick="openCoordinatorFolder('${fld.id}')">
                   <div>
-                    <!-- Top Row: Squircle Folder Icon + Title + Status Pill -->
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 10px;">
-                      <div style="display: flex; align-items: center; gap: 12px;">
-                        <div class="folder-icon-squircle ${squircleClass}">
-                          <i class="fas ${prog.isComplete ? 'fa-folder-check' : (prog.completed > 0 ? 'fa-folder-open' : 'fa-folder')}"></i>
-                        </div>
-                        <div>
-                          <h4 style="font-size: 16.5px; font-weight: 800; color: #0F172A; margin: 0 0 3px 0; letter-spacing: -0.01em;">${fld.title}</h4>
-                          <span style="font-size: 12px; font-weight: 600; color: #64748B;">${fld.description || 'Official Format Folder'}</span>
-                        </div>
+                    <!-- Top Row: Squircle Folder Icon + Full-Width Title & Description -->
+                    <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                      <div class="folder-icon-squircle ${squircleClass}" style="flex-shrink: 0;">
+                        <i class="fas ${prog.isComplete ? 'fa-folder-check' : (prog.completed > 0 ? 'fa-folder-open' : 'fa-folder')}"></i>
                       </div>
-                      <div>
-                        ${window.renderFolderStatusBadge(fld, fldRec)}
+                      <div style="flex: 1; min-width: 0;">
+                        <h4 style="font-size: 16px; font-weight: 800; color: #0F172A; margin: 0 0 4px 0; letter-spacing: -0.01em; line-height: 1.3; word-break: break-word;">${fld.title}</h4>
+                        <div style="font-size: 12px; font-weight: 600; color: #64748B; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${(fld.description || 'Official Format Folder').replace(/"/g, '&quot;')}">${fld.description || 'Official Format Folder'}</div>
                       </div>
+                    </div>
+
+                    <!-- Status Badge Row -->
+                    <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                      ${window.renderFolderStatusBadge(fld, fldRec)}
                     </div>
 
                     <!-- Chips / Key Metrics Row -->
@@ -3046,20 +3046,20 @@ function renderAdminDepartmentFolders(container) {
             return `
               <div class="premium-folder-card ${cardClass}" onclick="openAdminFormatFolder('${fld.id}')">
                 <div>
-                  <!-- Top Row: Squircle Folder Icon + Title + Status Pill -->
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 10px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                      <div class="folder-icon-squircle ${squircleClass}">
-                        <i class="fas ${isRejected ? 'fa-undo' : (isVerified ? 'fa-shield-alt' : (isHodApproved ? 'fa-check-circle' : (prog.completed > 0 ? 'fa-folder-open' : 'fa-folder')))}"></i>
-                      </div>
-                      <div>
-                        <h4 style="font-size: 16.5px; font-weight: 800; color: #0F172A; margin: 0 0 3px 0; letter-spacing: -0.01em;">${fld.title}</h4>
-                        <span style="font-size: 12px; font-weight: 600; color: #64748B;">${fld.description || 'Official Format Folder'}</span>
-                      </div>
+                  <!-- Top Row: Squircle Folder Icon + Full-Width Title & Description -->
+                  <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                    <div class="folder-icon-squircle ${squircleClass}" style="flex-shrink: 0;">
+                      <i class="fas ${isRejected ? 'fa-undo' : (isVerified ? 'fa-shield-alt' : (isHodApproved ? 'fa-check-circle' : (prog.completed > 0 ? 'fa-folder-open' : 'fa-folder')))}"></i>
                     </div>
-                    <div>
-                      ${window.renderFolderStatusBadge(fld, fldRec)}
+                    <div style="flex: 1; min-width: 0;">
+                      <h4 style="font-size: 16px; font-weight: 800; color: #0F172A; margin: 0 0 4px 0; letter-spacing: -0.01em; line-height: 1.3; word-break: break-word;">${fld.title}</h4>
+                      <div style="font-size: 12px; font-weight: 600; color: #64748B; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${(fld.description || 'Official Format Folder').replace(/"/g, '&quot;')}">${fld.description || 'Official Format Folder'}</div>
                     </div>
+                  </div>
+
+                  <!-- Status Badge Row -->
+                  <div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                    ${window.renderFolderStatusBadge(fld, fldRec)}
                   </div>
 
                   <!-- Chips / Key Metrics Row -->
