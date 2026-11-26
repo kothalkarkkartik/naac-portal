@@ -359,8 +359,12 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'This Gmail address is already registered. Please sign in or use another Gmail.' });
   }
 
-  const assignedRole = role === 'hod' ? 'hod' : 'dept_coordinator';
-  const assignedDesignation = designation || (assignedRole === 'hod' ? 'Head of Department' : 'Accreditation Coordinator');
+  const assignedRole = role === 'hod' ? 'hod' : (role === 'tpo' ? 'tpo' : 'dept_coordinator');
+  const assignedDesignation = designation || (
+    assignedRole === 'hod'
+      ? 'Head of Department'
+      : (assignedRole === 'tpo' ? 'Training & Placement Officer (TPO)' : 'Accreditation Coordinator')
+  );
 
   const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
   const newUser = {

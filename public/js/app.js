@@ -446,6 +446,7 @@ function setupRoleNavigation(role) {
 
   switch (role) {
     case 'dept_coordinator':
+    case 'tpo':
       // The 3 old tabs are completely removed as requested!
       navItems = [
         { id: 'coord-annual-upload', label: 'Annual Criteria Submissions (2023 - 2027)', icon: 'fa-file-excel' }
@@ -529,7 +530,7 @@ async function renderActiveView() {
 
   const role = state.currentUser.role;
 
-  if (role === 'dept_coordinator') {
+  if (role === 'dept_coordinator' || role === 'tpo') {
     renderCoordinatorYearwiseWorkspace(main);
   } else if (role === 'hod') {
     if (state.activeTab === 'hod-annual-review') renderHodYearwiseReview(main);
@@ -2420,6 +2421,7 @@ async function renderAdminRegisteredUsers(container) {
   const users = state.allUsers || [];
   const coords = users.filter(u => u.role === 'dept_coordinator');
   const hods = users.filter(u => u.role === 'hod');
+  const tpos = users.filter(u => u.role === 'tpo');
   const executives = users.filter(u => ['admin_coordinator', 'principal', 'president'].includes(u.role));
 
   container.innerHTML = `
@@ -2462,6 +2464,7 @@ async function renderAdminRegisteredUsers(container) {
               <option value="all">All Roles (${users.length})</option>
               <option value="dept_coordinator">Department Coordinators (${coords.length})</option>
               <option value="hod">Head of Departments (${hods.length})</option>
+              <option value="tpo">Training & Placement Officers (${tpos.length})</option>
               <option value="exec">College Leadership (${executives.length})</option>
             </select>
           </div>
@@ -4175,6 +4178,7 @@ function formatRoleName(role) {
     case 'principal': return 'Principal';
     case 'president': return 'Hon. President';
     case 'hod': return 'Head of Department (HOD)';
+    case 'tpo': return 'Training & Placement Officer (TPO)';
     case 'dept_coordinator': return 'Department Coordinator';
     default: return role;
   }
