@@ -686,7 +686,8 @@ window.renderFolderStatusBadge = function(fld, fldRec) {
 
 window.getEffectiveUserDeptId = function() {
   if (state.currentUser?.role === 'tpo') return 'unit-tpo';
-  return state.currentUser?.departmentId;
+  const matched = (state.departments || []).find(d => d.id === state.currentUser?.departmentId);
+  return matched ? matched.id : (state.departments?.[0]?.id || state.currentUser?.departmentId);
 };
 
 // ==========================================================================
@@ -1356,6 +1357,9 @@ window.handleFolderUpload = async function(folderId, event, customInputId, templ
     rec.excelFile = newResponseFile;
     rec.folderId = folderId;
     rec.author = state.currentUser.name;
+    if (rec.status === 'returned_for_revision' || rec.status === 'rejected') {
+      rec.status = 'draft';
+    }
     if (remarks) rec.coordinatorRemarks = remarks;
 
     const saveRes = await fetch('/api/yearwise-records', {
@@ -1365,12 +1369,21 @@ window.handleFolderUpload = async function(folderId, event, customInputId, templ
     }).then(r => r.json());
 
     if (saveRes.success) {
+      if (saveRes.record) {
+        const idx = state.yearwiseRecords.findIndex(r => r.id === saveRes.record.id);
+        if (idx >= 0) state.yearwiseRecords[idx] = saveRes.record;
+        else state.yearwiseRecords.push(saveRes.record);
+      }
       window.updateUploadProgress({ isDone: true });
       setTimeout(() => {
         window.closeUploadProgress();
       }, 700);
       showToast(`Response file "${uploadRes.file.name}" uploaded successfully!`, 'success');
+      renderActiveView();
       await loadInitialData();
+      if (saveRes.record && !state.yearwiseRecords.some(r => r.id === saveRes.record.id)) {
+        state.yearwiseRecords.push(saveRes.record);
+      }
       renderActiveView();
     } else {
       window.updateUploadProgress({ isError: true, errorText: saveRes.error || 'Failed to save record.' });

@@ -1163,16 +1163,18 @@ app.post('/api/yearwise-records', async (req, res) => {
         mergedFiles.push(body.excelFile);
       }
     }
+    const wasRejected = existingRec.status === 'returned_for_revision' || existingRec.status === 'rejected';
     records[existingIndex] = {
       ...existingRec,
       ...body,
+      status: (wasRejected && (body.excelFile || mergedFiles.length > 0)) ? 'draft' : (body.status || existingRec.status || 'draft'),
       uploadedFiles: mergedFiles,
       excelFile: body.excelFile || (mergedFiles.length ? mergedFiles[mergedFiles.length - 1] : null),
       folderId: targetFolderId,
       updatedAt: now
     };
     writeData('yearwise_records.json', records);
-    syncToFirestore('yearwise_records', records[existingIndex].id, records[existingIndex]);
+    await syncToFirestore('yearwise_records', records[existingIndex].id, records[existingIndex]);
     logActivity('UPDATE_YEARWISE_RECORD', body.author || 'Coordinator', `Updated folder criteria upload for ${body.departmentId} (${body.academicYear}) [${targetFolderId}]`, body.departmentId);
     return res.json({ success: true, record: records[existingIndex] });
   } else {
@@ -1191,7 +1193,7 @@ app.post('/api/yearwise-records', async (req, res) => {
     };
     records.push(newRecord);
     writeData('yearwise_records.json', records);
-    syncToFirestore('yearwise_records', newRecord.id, newRecord);
+    await syncToFirestore('yearwise_records', newRecord.id, newRecord);
     logActivity('CREATE_YEARWISE_RECORD', body.author || 'Coordinator', `Initialized criteria upload for ${body.departmentId} (${body.academicYear}) into folder ${targetFolderId}`, body.departmentId);
     return res.json({ success: true, record: newRecord });
   }
