@@ -2779,6 +2779,26 @@ function renderAdminDepartmentFolders(container) {
             </div>
 
             <!-- Official Templates & Department Response Pairs -->
+            ${(fld.isTpoFolder && state.currentUser?.role === 'admin_coordinator') ? `
+              <div style="background: #FAF5FF; border: 2px dashed #C084FC; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 800; color: #581C87; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-cloud-upload-alt" style="color: #7E22CE;"></i>
+                    <span>Upload Official Template for TPO</span>
+                  </div>
+                  <div style="font-size: 11.5px; color: #6B21A8; font-weight: 600; margin-top: 2px;">
+                    Admin can directly add Excel, Word, or PDF templates here — TPO will immediately see and download them.
+                  </div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                  <input type="file" id="folder-upload-input-${fld.id}" class="ios-input" accept="*/*" style="width: auto; padding: 6px 10px; font-size: 12px; font-weight: 700; background: #FFF;" />
+                  <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #7E22CE 0%, #6B21A8 100%); color: #FFF; font-size: 12px; font-weight: 800; padding: 8px 16px; border-radius: 8px;" onclick="handleUploadFileToFolder('${fld.id}')">
+                    <i class="fas fa-plus"></i> Upload Template to TPO
+                  </button>
+                </div>
+              </div>
+            ` : ''}
+
             <div style="background: #FFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
               <div style="font-size: 12.5px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.3px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-copy" style="color: #2563EB; font-size: 15px;"></i>
@@ -3250,7 +3270,7 @@ function renderAdminDepartmentFolders(container) {
             `;
           })()}
           <div class="responsive-dept-grid">
-            ${departments.map(d => {
+            ${departments.filter(d => d.id !== 'unit-tpo').map(d => {
               const deptRecs = records.filter(r => r.departmentId === d.id && (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)));
               const hasUploads = deptRecs.length > 0;
               const hasRejected = deptRecs.some(r => r.status === 'returned_for_revision' || r.status === 'rejected');

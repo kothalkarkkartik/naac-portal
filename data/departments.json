@@ -180,5 +180,18 @@
     "established": 2007,
     "intake": 0,
     "description": "Institutional incubation, funded research grants (SERB/AICTE/DST), patent filings, indexed publications, and corporate MOUs."
+  },
+  {
+    "id": "unit-tpo",
+    "name": "Training & Placement Cell (TPO)",
+    "shortName": "TPO Cell",
+    "section": "Support & Functional Units",
+    "category": "support",
+    "hod": "Director IQAC (Admin)",
+    "coordinator": "Training & Placement Officer (TPO)",
+    "code": "UNIT-TPO",
+    "established": 2001,
+    "intake": 0,
+    "description": "Campus placement drives, corporate relations, student internships, offer letters, and annual placement records."
   }
 ]
