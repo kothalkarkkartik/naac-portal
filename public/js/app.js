@@ -457,6 +457,7 @@ function setupRoleNavigation(role) {
     case 'hod':
       navItems = [
         { id: 'hod-annual-review', label: 'Annual Department Excel Scrutiny (2023 - 2027)', icon: 'fa-check-circle' },
+        { id: 'hod-upload', label: 'Upload Reports & Formats (2023 - 2027)', icon: 'fa-cloud-upload-alt' },
         { id: 'hod-all-branches', label: 'Department Overview', icon: 'fa-university' }
       ];
       state.activeTab = state.activeTab || 'hod-annual-review';
@@ -533,7 +534,8 @@ async function renderActiveView() {
   if (role === 'dept_coordinator' || role === 'tpo') {
     renderCoordinatorYearwiseWorkspace(main);
   } else if (role === 'hod') {
-    if (state.activeTab === 'hod-annual-review') renderHodYearwiseReview(main);
+    if (state.activeTab === 'hod-upload') renderCoordinatorYearwiseWorkspace(main);
+    else if (state.activeTab === 'hod-annual-review') renderHodYearwiseReview(main);
     else renderHodAllRecords(main);
   } else if (role === 'admin_coordinator') {
     if (state.activeTab === 'admin-master-template') renderAdminMasterTemplateManager(main);
