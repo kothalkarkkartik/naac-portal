@@ -692,19 +692,29 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
-  let finalUrl = '/uploads/' + (req.file.filename || req.file.originalname);
+  const cleanOriginalName = req.file.originalname || req.file.filename || 'document';
+  const ext = path.extname(cleanOriginalName).toLowerCase();
+  const isImage = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'].includes(ext);
+  // Cloudinary free tier blocks HTTP delivery of .pdf/.zip/.rar/.7z; store exact raw bytes with .txt transport name
+  // while preserving the real filename & Content-Type in our white-labeled download/view proxy.
+  const isBlockedExt = ['.pdf', '.zip', '.rar', '.7z', '.exe', '.bin'].includes(ext);
+  const endpoint = isImage ? 'auto' : 'raw';
+  const transportName = isBlockedExt ? `${path.basename(cleanOriginalName, ext)}.txt` : cleanOriginalName;
+
+  let finalUrl = '/uploads/' + (req.file.filename || cleanOriginalName);
   let cloudinaryPublicId = null;
+  let cloudErrorMsg = null;
 
   try {
     const fileBuffer = req.file.buffer || (req.file.path ? fs.readFileSync(req.file.path) : null);
     if (!fileBuffer) throw new Error('File buffer is empty');
-    const blob = new Blob([fileBuffer], { type: req.file.mimetype || 'application/octet-stream' });
+    const blob = new Blob([fileBuffer], { type: 'application/octet-stream' });
     const formData = new FormData();
-    formData.append('file', blob, req.file.originalname);
+    formData.append('file', blob, transportName);
     formData.append('upload_preset', 'naackk');
     formData.append('folder', 'naackk');
 
-    const cldRes = await fetch('https://api.cloudinary.com/v1_1/wtlbrdk3/auto/upload', {
+    const cldRes = await fetch(`https://api.cloudinary.com/v1_1/wtlbrdk3/${endpoint}/upload`, {
       method: 'POST',
       body: formData
     });
@@ -713,10 +723,18 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     if (cldData && cldData.secure_url) {
       finalUrl = cldData.secure_url;
       cloudinaryPublicId = cldData.public_id;
+    } else {
+      cloudErrorMsg = cldData?.error?.message || `Cloudinary returned ${cldRes.status}`;
     }
-  } catch (cldErr) { }
+  } catch (cldErr) {
+    cloudErrorMsg = cldErr.message;
+  }
 
-  const cleanOriginalName = req.file.originalname || req.file.filename;
+  // On serverless (Vercel), local /uploads/ is ephemeral; fail loudly instead of saving a broken URL
+  if (isVercelEnv && !finalUrl.startsWith('http')) {
+    return res.status(502).json({ error: `Cloud storage upload failed: ${cloudErrorMsg || 'Please try again.'}` });
+  }
+
   const token = Buffer.from(finalUrl).toString('base64url');
   const whiteLabeledDownloadUrl = `/api/files/download/${encodeURIComponent(cleanOriginalName)}?f=${token}`;
   const whiteLabeledViewUrl = `/api/files/view/${encodeURIComponent(cleanOriginalName)}?f=${token}`;
