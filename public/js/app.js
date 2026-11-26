@@ -684,12 +684,24 @@ window.renderFolderStatusBadge = function(fld, fldRec) {
   return `<span class="ios-status-tag status-draft" style="background: #F0FDF4; color: #15803D; border: 1.5px solid #86EFAC; font-weight: 800;"><i class="fas fa-file-check"></i> Draft (All ${total} Files Uploaded)</span>`;
 };
 
+window.getEffectiveUserDeptId = function() {
+  if (state.currentUser?.role === 'tpo') return 'unit-tpo';
+  return state.currentUser?.departmentId;
+};
+
 // ==========================================================================
 // 1. DEPARTMENT COORDINATOR YEARWISE EXCEL WORKSPACE
 // ==========================================================================
 function renderCoordinatorYearwiseWorkspace(container) {
-  const dept = state.departments.find(d => d.id === state.currentUser.departmentId) || state.departments[0];
-  const folders = state.formatFolders || [];
+  const isTpoUser = state.currentUser?.role === 'tpo';
+  const dept = isTpoUser
+    ? { id: 'unit-tpo', name: 'Training & Placement Cell (TPO)', code: 'TPO', section: 'Confidential Placement Cell', coordinator: state.currentUser.name, hod: 'Director IQAC (Admin)' }
+    : (state.departments.find(d => d.id === state.currentUser.departmentId) || state.departments[0]);
+  const folders = (state.formatFolders || []).filter(f =>
+    isTpoUser
+      ? (f.isTpoFolder || f.id === 'fld-tpo-permanent')
+      : (!f.isTpoFolder && f.id !== 'fld-tpo-permanent')
+  );
 
   container.innerHTML = `
     <!-- Top Action Header: Department Identity + Yearwise Selector -->
@@ -889,7 +901,7 @@ function renderCoordinatorYearwiseWorkspace(container) {
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
                   <div style="font-size: 12.5px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.3px; display: flex; align-items: center; gap: 8px;">
                     <i class="fas fa-copy" style="color: #2563EB; font-size: 15px;"></i>
-                    <span>${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `Uploaded Department Reports (${prog.uploadedFiles ? prog.uploadedFiles.length : 0}):` : `Official Templates & Response Submissions (${fld.files ? fld.files.length : 0}):`}</span>
+                    <span>${!hasTemplate ? `Uploaded Reports (${prog.uploadedFiles ? prog.uploadedFiles.length : 0}):` : `Official Templates & Response Submissions (${fld.files ? fld.files.length : 0}):`}</span>
                   </div>
                   ${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `
                     <span class="ios-status-tag" style="background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE; font-size: 11px; font-weight: 800;">
@@ -898,7 +910,7 @@ function renderCoordinatorYearwiseWorkspace(container) {
                   ` : ''}
                 </div>
 
-                ${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `
+                ${!hasTemplate ? `
                   <div style="background: #F8FAFC; border: 2px dashed #93C5FD; border-radius: 12px; padding: 18px 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                       <div>
@@ -1294,7 +1306,7 @@ window.handleFolderUpload = async function(folderId, event, customInputId, templ
     }
     window.updateUploadProgress({ percent: 96, statusText: 'Saving response record to database...' });
 
-    const deptId = state.currentUser.departmentId;
+    const deptId = window.getEffectiveUserDeptId();
     const year = state.selectedAcademicYear;
     const remarks = document.getElementById(`folder-remarks-${folderId}`)?.value || '';
 
@@ -1423,7 +1435,7 @@ window.handleAdminDeleteResponseFile = async function(recId, filename, folderId,
 };
 
 window.submitFolderToHOD = async function(folderId) {
-  const deptId = state.currentUser.departmentId;
+  const deptId = window.getEffectiveUserDeptId();
   const year = state.selectedAcademicYear;
 
   const fld = (state.formatFolders || []).find(f => f.id === folderId);
@@ -1494,7 +1506,7 @@ window.submitFolderToHOD = async function(folderId) {
 };
 
 window.saveFolderDraft = async function(folderId) {
-  const deptId = state.currentUser.departmentId;
+  const deptId = window.getEffectiveUserDeptId();
   const year = state.selectedAcademicYear;
   const remarks = document.getElementById(`folder-remarks-${folderId}`)?.value || '';
 
@@ -1545,7 +1557,7 @@ window.handleYearwiseExcelUpload = async function() {
     }
     window.updateUploadProgress({ percent: 96, statusText: 'Saving academic year record...' });
 
-    const deptId = state.currentUser.departmentId;
+    const deptId = window.getEffectiveUserDeptId();
     const year = state.selectedAcademicYear;
 
     let rec = state.yearwiseRecords.find(r => r.departmentId === deptId && r.academicYear === year) || {
@@ -1643,7 +1655,7 @@ window.submitYearToHOD = async function(recId) {
 // ==========================================================================
 function renderHodYearwiseReview(container) {
   const dept = state.departments.find(d => d.id === state.currentUser.departmentId) || state.departments[0];
-  const deptRecords = state.yearwiseRecords.filter(r => r.departmentId === dept.id);
+  const deptRecords = state.yearwiseRecords.filter(r => r.departmentId === dept.id && r.folderId !== 'fld-tpo-permanent');
 
   container.innerHTML = `
     <div class="ios-card">
@@ -1977,7 +1989,11 @@ function renderAdminMasterTemplateManager(container) {
                     <i class="fas ${fld.isPermanent ? 'fa-shield-alt' : 'fa-folder'}" style="font-size: 26px; color: ${fld.isPermanent ? '#4338CA' : '#F59E0B'};"></i>
                     <div>
                       <span style="font-size: 16px; font-weight: 800; color: #0F172A;">${fld.title}</span>
-                      ${fld.isPermanent ? `
+                      ${fld.isTpoFolder ? `
+                        <span class="ios-status-tag" style="background: #FAF5FF; color: #6B21A8; border: 1.5px solid #D8B4FE; font-size: 11px; font-weight: 800; margin-left: 8px;">
+                          <i class="fas fa-lock"></i> Confidential: Admin & TPO Only (${(fld.files || []).length} Templates)
+                        </span>
+                      ` : (fld.isPermanent ? `
                         <span class="ios-status-tag" style="background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE; font-size: 11px; font-weight: 800; margin-left: 8px;">
                           <i class="fas fa-layer-group"></i> Permanent Multi-Report Folder
                         </span>
@@ -1985,7 +2001,7 @@ function renderAdminMasterTemplateManager(container) {
                         <span class="ios-status-tag" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; font-size: 11px; font-weight: 800; margin-left: 8px;">
                           ${(fld.files || []).length} Files
                         </span>
-                      `}
+                      `)}
                     </div>
                   </div>
                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -2634,9 +2650,16 @@ function renderAdminDepartmentFolders(container) {
   const records = state.yearwiseRecords || [];
 
   if (selectedDeptId) {
-    const dept = departments.find(d => d.id === selectedDeptId) || departments[0];
+    const isTpoDept = selectedDeptId === 'unit-tpo';
+    const dept = isTpoDept
+      ? { id: 'unit-tpo', name: 'Training & Placement Cell (TPO)', code: 'TPO', section: 'Confidential Placement Cell', coordinator: 'TPO Officer', hod: 'Director IQAC (Admin)', established: 2001, intake: 0 }
+      : (departments.find(d => d.id === selectedDeptId) || departments[0]);
     const deptRecords = records.filter(r => r.departmentId === dept.id);
-    const folders = state.formatFolders || [];
+    const folders = (state.formatFolders || []).filter(f =>
+      isTpoDept
+        ? (f.isTpoFolder || f.id === 'fld-tpo-permanent')
+        : (!f.isTpoFolder && f.id !== 'fld-tpo-permanent')
+    );
     const openFormatFolderId = state.selectedAdminFormatFolder;
     const openFld = openFormatFolderId ? folders.find(f => f.id === openFormatFolderId) : null;
 
@@ -2746,10 +2769,10 @@ function renderAdminDepartmentFolders(container) {
             <div style="background: #FFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
               <div style="font-size: 12.5px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.3px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-copy" style="color: #2563EB; font-size: 15px;"></i>
-                <span>${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `Uploaded Department Reports (${prog.uploadedFiles ? prog.uploadedFiles.length : 0}):` : `Official Templates & Department Response Files (${fld.files ? fld.files.length : 0}):`}</span>
+                <span>${!hasTemplate ? `Uploaded Reports (${prog.uploadedFiles ? prog.uploadedFiles.length : 0}):` : `Official Templates & Department Response Files (${fld.files ? fld.files.length : 0}):`}</span>
               </div>
 
-              ${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `
+              ${!hasTemplate ? `
                 ${(prog.uploadedFiles && prog.uploadedFiles.length > 0) ? `
                   <div style="display: grid; gap: 10px;">
                     ${prog.uploadedFiles.map((respFile, rIdx) => {
@@ -3186,6 +3209,33 @@ function renderAdminDepartmentFolders(container) {
           </div>
         </div>
         <div class="ios-card-body">
+          ${(() => {
+            const tpoRecs = records.filter(r => (r.departmentId === 'unit-tpo' || r.folderId === 'fld-tpo-permanent') && (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)));
+            const tpoFilesCount = tpoRecs.reduce((acc, r) => acc + ((r.uploadedFiles && r.uploadedFiles.length) ? r.uploadedFiles.length : (r.excelFile ? 1 : 0)), 0);
+            const tpoFld = (state.formatFolders || []).find(f => f.isTpoFolder || f.id === 'fld-tpo-permanent');
+            const tpoTplCount = tpoFld?.files ? tpoFld.files.length : 0;
+            return `
+              <div onclick="openDepartmentFolder('unit-tpo')" style="cursor: pointer; background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%); border: 2px solid #C084FC; border-left: 6px solid #7E22CE; border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 14px rgba(126, 34, 206, 0.08);">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div style="width: 48px; height: 48px; border-radius: 14px; background: #7E22CE; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;">
+                    <i class="fas fa-briefcase"></i>
+                  </div>
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                      <h4 style="font-size: 16px; font-weight: 800; color: #4C1D95; margin: 0;">Training & Placement Cell (TPO) — Confidential Folder</h4>
+                      <span class="ios-status-tag" style="background: #FFFFFF; color: #6B21A8; border: 1.5px solid #D8B4FE; font-size: 10.5px; font-weight: 800;"><i class="fas fa-lock"></i> Admin & TPO Only</span>
+                    </div>
+                    <div style="font-size: 12.5px; font-weight: 600; color: #6B21A8; margin-top: 3px;">
+                      <strong>${tpoTplCount}</strong> Template(s) Released by Admin • <strong>${tpoFilesCount}</strong> TPO Report(s) Uploaded
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="ios-btn" style="background: #7E22CE; color: #FFF; font-size: 12px; font-weight: 800; padding: 8px 16px; border-radius: 9px;">
+                  <i class="fas fa-folder-open"></i> Open TPO Workspace
+                </button>
+              </div>
+            `;
+          })()}
           <div class="responsive-dept-grid">
             ${departments.map(d => {
               const deptRecs = records.filter(r => r.departmentId === d.id && (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)));
@@ -3696,11 +3746,24 @@ function renderExecutiveSubmissionsDesk(container, executiveRole = 'principal') 
   const folders = state.formatFolders || [];
   const currentFilterYear = state.selectedExecutiveYearFilter || 'all';
 
-  // Filter records with uploaded criteria responses
-  let activeRecords = records.filter(r => r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0));
+  // Filter records with uploaded criteria responses (exclude confidential TPO-only files from general executive file list)
+  let activeRecords = records.filter(r =>
+    (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)) &&
+    r.departmentId !== 'unit-tpo' &&
+    r.folderId !== 'fld-tpo-permanent'
+  );
   if (currentFilterYear !== 'all') {
     activeRecords = activeRecords.filter(r => r.academicYear === currentFilterYear);
   }
+
+  // Confidential TPO Work & Upload Activity Status (Visible to Principal & President, files restricted to Admin & TPO)
+  const tpoRecords = records.filter(r => (r.departmentId === 'unit-tpo' || r.folderId === 'fld-tpo-permanent') && (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)));
+  const tpoTotalFiles = tpoRecords.reduce((acc, r) => acc + ((r.uploadedFiles && r.uploadedFiles.length) ? r.uploadedFiles.length : (r.excelFile ? 1 : 0)), 0);
+  const tpoLatestRec = [...tpoRecords].sort((a, b) => (b.updatedAt || b.coordinatorSubmittedAt || b.createdAt || '').localeCompare(a.updatedAt || a.coordinatorSubmittedAt || a.createdAt || ''))[0];
+  const tpoUsers = (state.allUsers || []).filter(u => u.role === 'tpo');
+  const tpoOfficerName = tpoLatestRec?.author || tpoUsers[0]?.name || 'TPO Officer';
+  const tpoActiveYears = [...new Set(tpoRecords.map(r => r.academicYear))].join(', ');
+  const tpoWorking = tpoTotalFiles > 0;
 
   // Calculate Key Institutional Metrics
   const totalSubmissions = activeRecords.length;
@@ -3763,6 +3826,35 @@ function renderExecutiveSubmissionsDesk(container, executiveRole = 'principal') 
         <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #92400E;">Presidential Sealed</div>
         <div style="font-size: 26px; font-weight: 900; color: #B45309; margin-top: 4px;">${presidentEndorsedCount}</div>
         <div style="font-size: 11.5px; color: #B45309; font-weight: 700; margin-top: 2px;">Final Council Seal Affixed</div>
+      </div>
+    </div>
+
+    <!-- TPO Cell Work & Upload Activity Monitor (Status Only — Files Confidential to Admin & TPO) -->
+    <div style="background: ${tpoWorking ? 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)' : 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)'}; border: 2px solid ${tpoWorking ? '#86EFAC' : '#FCD34D'}; border-left: 6px solid ${tpoWorking ? '#16A34A' : '#D97706'}; border-radius: 14px; padding: 16px 20px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 3px 12px rgba(0,0,0,0.04);">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 46px; height: 46px; border-radius: 12px; background: ${tpoWorking ? '#16A34A' : '#D97706'}; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+          <i class="fas ${tpoWorking ? 'fa-briefcase' : 'fa-hourglass-half'}"></i>
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="font-size: 15px; font-weight: 900; color: #0F172A;">TPO Cell Work & Upload Activity</span>
+            <span class="ios-status-tag" style="background: ${tpoWorking ? '#DCFCE7' : '#FEF3C7'}; color: ${tpoWorking ? '#15803D' : '#92400E'}; border: 1.5px solid ${tpoWorking ? '#86EFAC' : '#F59E0B'}; font-size: 11px; font-weight: 800;">
+              ${tpoWorking ? `● ACTIVE — ${tpoTotalFiles} File(s) Uploaded` : '○ PENDING — No Uploads Yet'}
+            </span>
+          </div>
+          <div style="font-size: 12.5px; font-weight: 600; color: #334155; margin-top: 4px;">
+            ${tpoWorking
+              ? `Officer: <strong>${tpoOfficerName}</strong> • Active AY: <strong>${tpoActiveYears}</strong> • Last Activity: <strong>${tpoLatestRec?.updatedAt || tpoLatestRec?.coordinatorSubmittedAt || tpoLatestRec?.createdAt || 'Recent'}</strong>`
+              : `TPO Officer (${tpoOfficerName}) has not uploaded placement reports yet.`
+            }
+          </div>
+          <div style="font-size: 11px; font-weight: 700; color: #64748B; margin-top: 3px;">
+            <i class="fas fa-lock" style="color: #7E22CE;"></i> Confidential Workspace: Actual placement files are restricted to TPO & IQAC Admin; live work status is visible here.
+          </div>
+        </div>
+      </div>
+      <div style="background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 10px; padding: 8px 14px; font-size: 12px; font-weight: 800; color: #0F172A;">
+        Status: ${tpoWorking ? (tpoLatestRec?.status === 'iqac_verified' ? '✓ IQAC Verified' : (tpoLatestRec?.status === 'submitted_to_hod' ? 'Submitted to IQAC Admin' : 'Draft / Uploading')) : 'Awaiting Upload'}
       </div>
     </div>
 

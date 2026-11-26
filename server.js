@@ -897,6 +897,18 @@ const PERMANENT_REPORT_FOLDER = {
   files: []
 };
 
+const PERMANENT_TPO_FOLDER = {
+  id: 'fld-tpo-permanent',
+  title: 'TPO Cell Formats & Placement Reports',
+  description: 'Confidential workspace for Training & Placement Officer (TPO) and IQAC Admin. Admin provides placement templates here; TPO uploads placement drives, offers, and annual reports.',
+  createdAt: '2026-11-26 17:00',
+  createdBy: 'Institutional System / Director IQAC',
+  isPermanent: true,
+  isTpoFolder: true,
+  isMultiReport: true,
+  files: []
+};
+
 async function getAllFormatFolders() {
   let folders = [];
   if (adminDb) {
@@ -932,6 +944,16 @@ async function getAllFormatFolders() {
   } else {
     folders[permIdx].isPermanent = true;
     folders[permIdx].isMultiReport = true;
+  }
+
+  // Ensure Permanent Confidential TPO Folder always exists for Admin & TPO
+  const tpoIdx = folders.findIndex(f => f.id === PERMANENT_TPO_FOLDER.id);
+  if (tpoIdx === -1) {
+    folders.push({ ...PERMANENT_TPO_FOLDER });
+  } else {
+    folders[tpoIdx].isPermanent = true;
+    folders[tpoIdx].isTpoFolder = true;
+    folders[tpoIdx].isMultiReport = true;
   }
 
   writeData('format_folders.json', folders);
@@ -1018,8 +1040,8 @@ app.put('/api/format-folders/:id', async (req, res) => {
 });
 
 app.delete('/api/format-folders/:id', async (req, res) => {
-  if (req.params.id === 'fld-permanent-reports') {
-    return res.status(400).json({ error: 'Permanent institutional report folder cannot be deleted.' });
+  if (req.params.id === 'fld-permanent-reports' || req.params.id === 'fld-tpo-permanent') {
+    return res.status(400).json({ error: 'Permanent institutional folder cannot be deleted.' });
   }
 
   let folders = await getAllFormatFolders();

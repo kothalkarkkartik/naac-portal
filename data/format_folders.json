@@ -10,6 +10,17 @@
     "files": []
   },
   {
+    "id": "fld-tpo-permanent",
+    "title": "TPO Cell Formats & Placement Reports",
+    "description": "Confidential workspace for Training & Placement Officer (TPO) and IQAC Admin. Admin provides placement templates here; TPO uploads placement drives, offers, and annual reports.",
+    "createdAt": "2026-11-26 17:00",
+    "createdBy": "Institutional System / Director IQAC",
+    "isPermanent": true,
+    "isTpoFolder": true,
+    "isMultiReport": true,
+    "files": []
+  },
+  {
     "id": "fld-1795252350943",
     "createdAt": "2026-11-21 09:12",
     "createdBy": "Director IQAC",
