@@ -856,6 +856,17 @@ app.post('/api/master-template', (req, res) => {
 });
 
 // Format Folders & Files API (Admin creates folders & uploads files, Coordinators browse & download)
+const PERMANENT_REPORT_FOLDER = {
+  id: 'fld-permanent-reports',
+  title: 'Department Reports & Evidence (Any Report Upload)',
+  description: 'Permanent institutional repository for any departmental reports, event summaries, activity documents, certificates, and evidence. Faculty and Coordinators can upload multiple reports at any time.',
+  createdAt: '2026-11-26 10:00',
+  createdBy: 'Institutional System / Director IQAC',
+  isPermanent: true,
+  isMultiReport: true,
+  files: []
+};
+
 async function getAllFormatFolders() {
   let folders = [];
   if (adminDb) {
@@ -883,6 +894,16 @@ async function getAllFormatFolders() {
       }
     });
   }
+
+  // Ensure Permanent Report Folder always exists across all 14 departments
+  const permIdx = folders.findIndex(f => f.id === PERMANENT_REPORT_FOLDER.id);
+  if (permIdx === -1) {
+    folders.unshift({ ...PERMANENT_REPORT_FOLDER });
+  } else {
+    folders[permIdx].isPermanent = true;
+    folders[permIdx].isMultiReport = true;
+  }
+
   writeData('format_folders.json', folders);
   return folders;
 }
@@ -944,9 +965,38 @@ app.post('/api/format-folders', async (req, res) => {
   res.json({ success: true, folder: newFolder });
 });
 
-app.delete('/api/format-folders/:id', async (req, res) => {
+// Update/Edit Format Folder Title & Description
+app.put('/api/format-folders/:id', async (req, res) => {
+  const { title, description } = req.body;
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: 'Folder title is required.' });
+  }
   let folders = await getAllFormatFolders();
   const folder = folders.find(f => f.id === req.params.id);
+  if (!folder) {
+    return res.status(404).json({ error: 'Folder not found.' });
+  }
+  folder.title = title.trim();
+  if (description !== undefined) {
+    folder.description = description.trim();
+  }
+  folder.updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
+  writeData('format_folders.json', folders);
+  syncToFirestore('format_folders', folder.id, folder);
+  logActivity('UPDATE_FORMAT_FOLDER', 'Director IQAC', `Updated format folder: ${folder.title}`);
+  res.json({ success: true, folder });
+});
+
+app.delete('/api/format-folders/:id', async (req, res) => {
+  if (req.params.id === 'fld-permanent-reports') {
+    return res.status(400).json({ error: 'Permanent institutional report folder cannot be deleted.' });
+  }
+
+  let folders = await getAllFormatFolders();
+  const folder = folders.find(f => f.id === req.params.id);
+  if (folder?.isPermanent) {
+    return res.status(400).json({ error: 'Permanent institutional report folder cannot be deleted.' });
+  }
 
   // Clean up any yearwise submissions that belonged to this folder
   try {

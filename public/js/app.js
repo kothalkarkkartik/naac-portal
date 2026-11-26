@@ -586,13 +586,24 @@ window.getFileIconInfo = function(fileName) {
 // FOLDER PROGRESS & STATUS ENGINE
 // ==========================================================================
 window.getFolderProgress = function(fld, fldRec) {
-  const total = (fld && fld.files && fld.files.length) ? fld.files.length : 1;
   const isRejected = fldRec && (fldRec.status === 'returned_for_revision' || fldRec.status === 'rejected');
 
   // When rejected or returned for revision, previously submitted response files are deleted
   const rawFiles = fldRec ? ((fldRec.uploadedFiles && fldRec.uploadedFiles.length) ? fldRec.uploadedFiles : (fldRec.excelFile ? [fldRec.excelFile] : [])) : [];
   const uploadedFiles = isRejected ? [] : rawFiles;
-  
+  const isMulti = !!(fld && (fld.isMultiReport || fld.isPermanent || (!fld.files || fld.files.length === 0)));
+
+  if (isMulti) {
+    const total = uploadedFiles.length > 0 ? uploadedFiles.length : 1;
+    const completed = uploadedFiles.length;
+    const pending = 0;
+    const isComplete = uploadedFiles.length > 0;
+    const isPartial = false;
+    const percent = uploadedFiles.length > 0 ? 100 : 0;
+    return { total, completed, pending, isComplete, isPartial, percent, uploadedFiles, isMulti: true };
+  }
+
+  const total = (fld && fld.files && fld.files.length) ? fld.files.length : 1;
   let completed = 0;
   if (!isRejected) {
     if (fld && fld.files && fld.files.length > 0) {
@@ -609,49 +620,58 @@ window.getFolderProgress = function(fld, fldRec) {
   const isPartial = completed > 0 && completed < total;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
   
-  return { total, completed, pending, isComplete, isPartial, percent, uploadedFiles };
+  return { total, completed, pending, isComplete, isPartial, percent, uploadedFiles, isMulti: false };
 };
 
 window.renderFolderStatusBadge = function(fld, fldRec) {
+  const { total, completed, pending, isComplete, isPartial, isMulti, uploadedFiles } = window.getFolderProgress(fld, fldRec);
+
   if (!fldRec) {
+    if (fld?.isPermanent || isMulti) {
+      return `<span class="ios-status-tag" style="background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE; font-weight: 800;"><i class="fas fa-layer-group"></i> Ready for Multiple Reports</span>`;
+    }
     const hasTemplate = fld && fld.files && fld.files.length > 0;
     return hasTemplate
       ? `<span class="ios-status-tag" style="background: #EFF6FF; color: #1E40AF; border: 1.5px solid #BFDBFE;"><i class="fas fa-file-download"></i> Ready for Upload (0/${fld.files.length})</span>`
       : `<span class="ios-status-tag" style="background: #F1F5F9; color: #94A3B8;">Awaiting Release</span>`;
   }
 
-  const { total, completed, pending, isComplete, isPartial } = window.getFolderProgress(fld, fldRec);
-
   // Status priority check:
   if (fldRec.status === 'returned_for_revision' || fldRec.status === 'rejected') {
     return `<span class="ios-status-tag status-rejected" style="background: #FEF2F2; color: #DC2626; border: 1.5px solid #FCA5A5; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-undo"></i> Rejected / Needs Revision</span>`;
   }
 
+  const countLabel = isMulti ? `${uploadedFiles.length} Report(s)` : `${completed}/${total}`;
+
   if (fldRec.status === 'iqac_verified' || fldRec.status === 'verified_by_iqac') {
-    return `<span class="ios-status-tag status-iqac-verified" style="background: #ECFDF5; color: #047857; border: 1.5px solid #6EE7B7; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-shield-alt"></i> IQAC Verified (${completed}/${total})</span>`;
+    return `<span class="ios-status-tag status-iqac-verified" style="background: #ECFDF5; color: #047857; border: 1.5px solid #6EE7B7; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-shield-alt"></i> IQAC Verified (${countLabel})</span>`;
   }
 
   if (fldRec.status === 'approved_by_hod') {
-    return `<span class="ios-status-tag status-hod-approved" style="background: #F0FDF4; color: #15803D; border: 1.5px solid #86EFAC; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-check-circle"></i> HOD Approved (${completed}/${total})</span>`;
+    return `<span class="ios-status-tag status-hod-approved" style="background: #F0FDF4; color: #15803D; border: 1.5px solid #86EFAC; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-check-circle"></i> HOD Approved (${countLabel})</span>`;
   }
 
   if (fldRec.status === 'approved_by_principal') {
-    return `<span class="ios-status-tag status-principal-approved" style="background: #FAF5FF; color: #7E22CE; border: 1.5px solid #D8B4FE; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-crown"></i> Principal Approved (${completed}/${total})</span>`;
+    return `<span class="ios-status-tag status-principal-approved" style="background: #FAF5FF; color: #7E22CE; border: 1.5px solid #D8B4FE; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-crown"></i> Principal Approved (${countLabel})</span>`;
   }
 
   if (fldRec.status === 'endorsed_by_president') {
-    return `<span class="ios-status-tag status-president-endorsed"><i class="fas fa-star"></i> Presidential Endorsed (${completed}/${total})</span>`;
+    return `<span class="ios-status-tag status-president-endorsed"><i class="fas fa-star"></i> Presidential Endorsed (${countLabel})</span>`;
   }
 
   if (fldRec.status === 'submitted_to_hod') {
     if (isPartial) {
-      return `<span class="ios-status-tag" style="background: #FFFBEB; color: #B45309; border: 1.5px solid #FBBF24; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-hourglass-half"></i> Submitted to HOD (${completed}/${total} Files)</span>`;
+      return `<span class="ios-status-tag" style="background: #FFFBEB; color: #B45309; border: 1.5px solid #FBBF24; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-hourglass-half"></i> Submitted to HOD (${countLabel})</span>`;
     }
-    return `<span class="ios-status-tag status-submitted" style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #93C5FD; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-check-double"></i> Submitted to HOD (${completed}/${total} Files)</span>`;
+    return `<span class="ios-status-tag status-submitted" style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #93C5FD; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-check-double"></i> Submitted to HOD (${countLabel})</span>`;
   }
 
   if (completed === 0) {
-    return `<span class="ios-status-tag" style="background: #F1F5F9; color: #64748B; border: 1.5px solid #CBD5E1;"><i class="fas fa-clock"></i> 0/${total} Uploaded</span>`;
+    return `<span class="ios-status-tag" style="background: #F1F5F9; color: #64748B; border: 1.5px solid #CBD5E1;"><i class="fas fa-clock"></i> 0 Uploaded</span>`;
+  }
+
+  if (isMulti) {
+    return `<span class="ios-status-tag status-draft" style="background: #F0FDF4; color: #15803D; border: 1.5px solid #86EFAC; font-weight: 800;"><i class="fas fa-layer-group"></i> ${uploadedFiles.length} Report(s) Uploaded</span>`;
   }
 
   if (isPartial) {
@@ -863,59 +883,77 @@ function renderCoordinatorYearwiseWorkspace(container) {
 
               <!-- 2. Official Templates & Directly Paired Responses -->
               <div style="background: #FFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
-                <div style="font-size: 12.5px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.3px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-                  <i class="fas fa-copy" style="color: #2563EB; font-size: 15px;"></i>
-                  <span>Official Templates & Response Submissions (${fld.files ? fld.files.length : 0}):</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+                  <div style="font-size: 12.5px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.3px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-copy" style="color: #2563EB; font-size: 15px;"></i>
+                    <span>${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `Uploaded Department Reports (${prog.uploadedFiles ? prog.uploadedFiles.length : 0}):` : `Official Templates & Response Submissions (${fld.files ? fld.files.length : 0}):`}</span>
+                  </div>
+                  ${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `
+                    <span class="ios-status-tag" style="background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE; font-size: 11px; font-weight: 800;">
+                      <i class="fas fa-layer-group"></i> Multiple Reports Allowed
+                    </span>
+                  ` : ''}
                 </div>
 
-                ${!hasTemplate ? `
-                  <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 16px 20px;">
+                ${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `
+                  <div style="background: #F8FAFC; border: 2px dashed #93C5FD; border-radius: 12px; padding: 18px 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                       <div>
-                        <div style="font-size: 13px; font-weight: 800; color: #1E293B; display: flex; align-items: center; gap: 6px;">
-                          <i class="fas fa-info-circle" style="color: #2563EB;"></i>
-                          <span>No official template released yet by Admin IQAC</span>
+                        <div style="font-size: 13.5px; font-weight: 800; color: #1E293B; display: flex; align-items: center; gap: 6px;">
+                          <i class="fas fa-cloud-upload-alt" style="color: #2563EB; font-size: 17px;"></i>
+                          <span>${fld.isPermanent ? 'Upload Any Departmental / Faculty Report to Admin' : 'Upload Department Reports & Documents'}</span>
                         </div>
-                        <div style="font-size: 11.5px; color: #64748B; font-weight: 600; margin-top: 3px;">
-                          You can upload your department's response file (.xlsx, .xls, .docx, .pdf, or any format) directly into this folder.
+                        <div style="font-size: 12px; color: #475569; font-weight: 600; margin-top: 4px;">
+                          Faculty and Coordinators can upload <strong>multiple reports</strong> (.pdf, .xlsx, .docx, .pptx, images, zip, or any format). Each upload is added as a separate report.
                         </div>
                       </div>
                       <div>
-                        <input type="file" id="direct-upload-input-${fld.id}-direct" accept="*/*" style="display: none;" onchange="handleFolderUpload('${fld.id}', event, 'direct-upload-input-${fld.id}-direct', 'direct-upload', 'Department Response File')" />
-                        <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #FFF; font-size: 12px; font-weight: 800; padding: 8px 18px; border-radius: 8px; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3); display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('direct-upload-input-${fld.id}-direct').click()">
-                          <i class="fas fa-cloud-upload-alt"></i> Upload Response File
+                        <input type="file" id="direct-upload-input-${fld.id}-multi" accept="*/*" style="display: none;" onchange="handleFolderUpload('${fld.id}', event, 'direct-upload-input-${fld.id}-multi', '__multi__', 'Department Report')" />
+                        <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #FFF; font-size: 12.5px; font-weight: 800; padding: 10px 20px; border-radius: 9px; box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35); display: inline-flex; align-items: center; gap: 8px;" onclick="document.getElementById('direct-upload-input-${fld.id}-multi').click()">
+                          <i class="fas fa-plus-circle"></i> Upload New Report / File
                         </button>
                       </div>
                     </div>
 
                     ${(prog.uploadedFiles && prog.uploadedFiles.length > 0) ? `
-                      <div style="margin-top: 14px; padding-top: 14px; border-top: 1.5px solid #E2E8F0;">
-                        ${prog.uploadedFiles.map(respFile => `
-                          <div style="display: flex; justify-content: space-between; align-items: center; background: #F0FDF4; border: 1.5px solid #86EFAC; border-radius: 10px; padding: 12px 16px; flex-wrap: wrap; gap: 10px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                              <i class="fas fa-check-circle" style="color: #16A34A; font-size: 20px;"></i>
-                              <div>
-                                <div style="font-size: 13.5px; font-weight: 800; color: #15803D;">✓ ${respFile.name} <span style="font-size: 11px; font-weight: 600; color: #64748B;">(${respFile.size})</span></div>
-                                <div style="font-size: 11.5px; color: #475569; font-weight: 600; margin-top: 2px;">
-                                  Uploaded: ${respFile.uploadDate || 'Recent'} by <strong>${respFile.author || state.currentUser.name}</strong>
+                      <div style="margin-top: 16px; padding-top: 16px; border-top: 1.5px solid #E2E8F0; display: grid; gap: 10px;">
+                        ${prog.uploadedFiles.map((respFile, rIdx) => {
+                          const fIcon = window.getFileIconInfo(respFile.name);
+                          const delTarget = respFile.templateFileId || encodeURIComponent(respFile.name);
+                          return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; border: 1.5px solid #86EFAC; border-left: 4px solid #16A34A; border-radius: 10px; padding: 12px 16px; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                              <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas ${fIcon.icon}" style="color: ${fIcon.color}; font-size: 22px;"></i>
+                                <div>
+                                  <div style="font-size: 13.5px; font-weight: 800; color: #0F172A;">
+                                    <span style="color: #16A34A;">#${rIdx + 1}</span> ${respFile.name}
+                                    <span style="font-size: 11px; font-weight: 600; color: #64748B;">(${respFile.size || 'Document'})</span>
+                                  </div>
+                                  <div style="font-size: 11.5px; color: #475569; font-weight: 600; margin-top: 2px;">
+                                    Uploaded: ${respFile.uploadDate || 'Recent'} by <strong>${respFile.author || state.currentUser.name}</strong>
+                                  </div>
                                 </div>
                               </div>
+                              <div style="display: flex; gap: 6px; align-items: center;">
+                                <button type="button" class="ios-btn" style="background: #2563EB; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px;" onclick="openFileViewer('${encodeURIComponent(JSON.stringify(respFile))}', '${respFile.name}')">
+                                  <i class="fas fa-eye"></i> View
+                                </button>
+                                <a href="${getFileDownloadUrl(respFile)}" download="${respFile.name}" target="_blank" class="ios-btn" style="background: #16A34A; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; text-decoration: none;">
+                                  <i class="fas fa-download"></i> Download
+                                </a>
+                                <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; font-size: 11px; font-weight: 800; padding: 6px 10px; border-radius: 8px;" onclick="handleDeleteUploadedFile('${fldRec?.id}', '${encodeURIComponent(respFile.name)}', '${fld.id}', '${delTarget}')" title="Remove this report">
+                                  <i class="fas fa-trash-alt"></i>
+                                </button>
+                              </div>
                             </div>
-                            <div style="display: flex; gap: 6px; align-items: center;">
-                              <button type="button" class="ios-btn" style="background: #2563EB; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px;" onclick="openFileViewer('${encodeURIComponent(JSON.stringify(respFile))}', '${respFile.name}')">
-                                <i class="fas fa-eye"></i> View
-                              </button>
-                              <a href="${getFileDownloadUrl(respFile)}" download="${respFile.name}" target="_blank" class="ios-btn" style="background: #16A34A; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; text-decoration: none;">
-                                <i class="fas fa-download"></i> Download
-                              </a>
-                              <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; font-size: 11px; font-weight: 800; padding: 6px 10px; border-radius: 8px;" onclick="handleDeleteUploadedFile('${fldRec?.id}', '${encodeURIComponent(respFile.name)}', '${fld.id}', 'direct-upload')">
-                                <i class="fas fa-trash-alt"></i>
-                              </button>
-                            </div>
-                          </div>
-                        `).join('')}
+                          `;
+                        }).join('')}
                       </div>
-                    ` : ''}
+                    ` : `
+                      <div style="margin-top: 14px; font-size: 12.5px; color: #64748B; font-style: italic; font-weight: 600;">
+                        No reports uploaded yet for AY ${state.selectedAcademicYear}. Click "Upload New Report / File" above to add reports.
+                      </div>
+                    `}
                   </div>
                 ` : `
                   <div style="display: grid; gap: 14px;">
@@ -1145,26 +1183,39 @@ function renderCoordinatorYearwiseWorkspace(container) {
 
                     <!-- Chips / Key Metrics Row -->
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px 0;">
-                      <span class="folder-meta-chip folder-meta-chip-neutral">
-                        <i class="fas fa-file-excel" style="color: #2563EB;"></i>
-                        <span><strong>${prog.total}</strong> Official Template(s)</span>
-                      </span>
-                      ${prog.completed === 0 ? `
-                        <span class="folder-meta-chip folder-meta-chip-pending">
-                          <i class="fas fa-clock"></i>
-                          <span>0/${prog.total} Completed</span>
+                      ${fld.isPermanent ? `
+                        <span class="folder-meta-chip" style="background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE;">
+                          <i class="fas fa-shield-alt"></i>
+                          <span>Permanent Report Folder</span>
                         </span>
-                      ` : (prog.isPartial ? `
-                        <span class="folder-meta-chip folder-meta-chip-pending" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #FCD34D;">
-                          <i class="fas fa-hourglass-half"></i>
-                          <span><strong>${prog.completed} of ${prog.total}</strong> Completed (${prog.pending} Pending)</span>
+                      ` : ''}
+                      ${prog.isMulti ? `
+                        <span class="folder-meta-chip ${prog.uploadedFiles.length > 0 ? 'folder-meta-chip-success' : 'folder-meta-chip-neutral'}">
+                          <i class="fas fa-layer-group" style="color: ${prog.uploadedFiles.length > 0 ? '#16A34A' : '#2563EB'};"></i>
+                          <span><strong>${prog.uploadedFiles.length}</strong> Report(s) Uploaded</span>
                         </span>
                       ` : `
-                        <span class="folder-meta-chip folder-meta-chip-success">
-                          <i class="fas fa-check-circle"></i>
-                          <span><strong>All ${prog.total}</strong> Completed</span>
+                        <span class="folder-meta-chip folder-meta-chip-neutral">
+                          <i class="fas fa-file-excel" style="color: #2563EB;"></i>
+                          <span><strong>${prog.total}</strong> Official Template(s)</span>
                         </span>
-                      `)}
+                        ${prog.completed === 0 ? `
+                          <span class="folder-meta-chip folder-meta-chip-pending">
+                            <i class="fas fa-clock"></i>
+                            <span>0/${prog.total} Completed</span>
+                          </span>
+                        ` : (prog.isPartial ? `
+                          <span class="folder-meta-chip folder-meta-chip-pending" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #FCD34D;">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span><strong>${prog.completed} of ${prog.total}</strong> Completed (${prog.pending} Pending)</span>
+                          </span>
+                        ` : `
+                          <span class="folder-meta-chip folder-meta-chip-success">
+                            <i class="fas fa-check-circle"></i>
+                            <span><strong>All ${prog.total}</strong> Completed</span>
+                          </span>
+                        `)}
+                      `}
                       ${fldRec && fldRec.coordinatorRemarks ? `
                         <span class="folder-meta-chip folder-meta-chip-neutral" style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${fldRec.coordinatorRemarks}">
                           <i class="fas fa-comment-dots" style="color: #881337;"></i>
@@ -1258,14 +1309,21 @@ window.handleFolderUpload = async function(folderId, event, customInputId, templ
 
     rec.uploadedFiles = rec.uploadedFiles || [];
 
+    const effectiveTemplateId = (templateFileId === '__multi__')
+      ? `rep-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`
+      : (templateFileId || null);
+
     const newResponseFile = {
       ...uploadRes.file,
-      templateFileId: templateFileId || null,
+      author: state.currentUser?.name || 'Coordinator',
+      templateFileId: effectiveTemplateId,
       templateFileName: templateFileName ? decodeURIComponent(templateFileName) : uploadRes.file.name
     };
 
-    if (templateFileId) {
-      const matchIdx = rec.uploadedFiles.findIndex(f => f.templateFileId === templateFileId);
+    if (templateFileId === '__multi__') {
+      rec.uploadedFiles.push(newResponseFile);
+    } else if (effectiveTemplateId) {
+      const matchIdx = rec.uploadedFiles.findIndex(f => f.templateFileId === effectiveTemplateId);
       if (matchIdx >= 0) {
         rec.uploadedFiles[matchIdx] = newResponseFile;
       } else {
@@ -1913,17 +1971,30 @@ function renderAdminMasterTemplateManager(container) {
                 <!-- Folder Header -->
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
                   <div style="display: flex; align-items: center; gap: 12px;">
-                    <i class="fas fa-folder" style="font-size: 26px; color: #F59E0B;"></i>
+                    <i class="fas ${fld.isPermanent ? 'fa-shield-alt' : 'fa-folder'}" style="font-size: 26px; color: ${fld.isPermanent ? '#4338CA' : '#F59E0B'};"></i>
                     <div>
                       <span style="font-size: 16px; font-weight: 800; color: #0F172A;">${fld.title}</span>
-                      <span class="ios-status-tag" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; font-size: 11px; font-weight: 800; margin-left: 8px;">
-                        ${(fld.files || []).length} Files
-                      </span>
+                      ${fld.isPermanent ? `
+                        <span class="ios-status-tag" style="background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE; font-size: 11px; font-weight: 800; margin-left: 8px;">
+                          <i class="fas fa-layer-group"></i> Permanent Multi-Report Folder
+                        </span>
+                      ` : `
+                        <span class="ios-status-tag" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; font-size: 11px; font-weight: 800; margin-left: 8px;">
+                          ${(fld.files || []).length} Files
+                        </span>
+                      `}
                     </div>
                   </div>
-                  <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px;" onclick="handleDeleteFormatFolder('${fld.id}')">
-                    <i class="fas fa-trash-alt"></i> Delete Folder
-                  </button>
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="ios-btn" style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px;" onclick="openEditFolderModal('${fld.id}')" title="Edit folder name & description">
+                      <i class="fas fa-edit"></i> Edit Folder
+                    </button>
+                    ${!fld.isPermanent ? `
+                      <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px;" onclick="handleDeleteFormatFolder('${fld.id}')">
+                        <i class="fas fa-trash-alt"></i> Delete Folder
+                      </button>
+                    ` : ''}
+                  </div>
                 </div>
 
                 ${fld.description ? `
@@ -2171,6 +2242,91 @@ window.handleDeleteFormatFolder = async function(folderId) {
       }
     }
   });
+};
+
+window.openEditFolderModal = function(folderId) {
+  const fld = (state.formatFolders || []).find(f => f.id === folderId);
+  if (!fld) {
+    showToast('Folder not found.', 'error');
+    return;
+  }
+
+  const overlay = document.getElementById('workflow-modal-overlay');
+  const content = document.getElementById('workflow-modal-content');
+  if (!overlay || !content) return;
+
+  content.innerHTML = `
+    <div style="padding: 22px 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+            <i class="fas fa-edit"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 17px; font-weight: 800; color: #0F172A; margin: 0;">Edit Folder Name & Details</h3>
+            <span style="font-size: 12px; font-weight: 600; color: #64748B;">Changes will reflect immediately across all 14 departments</span>
+          </div>
+        </div>
+        <button type="button" class="ios-btn" style="background: #F1F5F9; color: #475569; font-weight: 800; padding: 6px 12px; border-radius: 8px;" onclick="window.closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveEditedFolder('${fld.id}', event)">
+        <div class="ios-form-group" style="margin-bottom: 16px;">
+          <label class="ios-label" style="font-size: 12px; font-weight: 800; color: #1E293B;">Folder Name / Title <span style="color:#DC2626;">*</span></label>
+          <input type="text" id="edit-folder-title-input" class="ios-input" value="${(fld.title || '').replace(/"/g, '&quot;')}" required style="padding: 10px 14px; font-size: 14px; font-weight: 700;" />
+        </div>
+
+        <div class="ios-form-group" style="margin-bottom: 22px;">
+          <label class="ios-label" style="font-size: 12px; font-weight: 800; color: #1E293B;">Description / Instructions</label>
+          <textarea id="edit-folder-desc-input" class="ios-input" rows="3" style="padding: 10px 14px; font-size: 13px; font-weight: 600; resize: vertical;">${fld.description || ''}</textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="ios-btn" style="background: #F1F5F9; color: #334155; font-size: 13px; font-weight: 800; padding: 10px 20px; border-radius: 9px;" onclick="window.closeModal()">
+            Cancel
+          </button>
+          <button type="submit" class="ios-btn" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #FFF; font-size: 13px; font-weight: 800; padding: 10px 24px; border-radius: 9px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);">
+            <i class="fas fa-save" style="margin-right: 6px;"></i> Save Folder Name
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  overlay.style.display = 'flex';
+  setTimeout(() => document.getElementById('edit-folder-title-input')?.focus(), 50);
+};
+
+window.handleSaveEditedFolder = async function(folderId, event) {
+  if (event) event.preventDefault();
+  const title = document.getElementById('edit-folder-title-input')?.value?.trim();
+  const description = document.getElementById('edit-folder-desc-input')?.value?.trim() || '';
+
+  if (!title) {
+    showToast('Folder title cannot be empty.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/format-folders/${folderId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, description })
+    }).then(r => r.json());
+
+    if (res.success) {
+      window.closeModal();
+      showToast(`Folder renamed to "${title}" successfully!`, 'success');
+      await loadInitialData();
+      renderActiveView();
+    } else {
+      showToast(res.error || 'Failed to update folder.', 'error');
+    }
+  } catch (err) {
+    console.debug('Update folder error:', err);
+    showToast('Failed to update folder.', 'error');
+  }
 };
 
 window.handleUploadFileToFolder = async function(folderId) {
@@ -2527,11 +2683,16 @@ function renderAdminDepartmentFolders(container) {
                 <span style="font-size: 12.5px; font-weight: 600; color: #64748B;">${fld.description || 'Official NAAC Accreditation Format'} • Coordinator: <strong>${dept.coordinator}</strong> • Head: <strong>${dept.hod}</strong></span>
               </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               ${(state.currentUser?.role === 'admin_coordinator') ? `
-                <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;" onclick="handleDeleteFormatFolder('${fld.id}')" title="Delete this format folder across all departments">
-                  <i class="fas fa-trash-alt"></i> Delete Folder
+                <button type="button" class="ios-btn" style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;" onclick="openEditFolderModal('${fld.id}')" title="Edit folder title & description">
+                  <i class="fas fa-edit"></i> Edit Folder
                 </button>
+                ${!fld.isPermanent ? `
+                  <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;" onclick="handleDeleteFormatFolder('${fld.id}')" title="Delete this format folder across all departments">
+                    <i class="fas fa-trash-alt"></i> Delete Folder
+                  </button>
+                ` : ''}
               ` : ''}
               ${window.renderFolderStatusBadge(fld, fldRec)}
             </div>
@@ -2580,13 +2741,45 @@ function renderAdminDepartmentFolders(container) {
             <div style="background: #FFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
               <div style="font-size: 12.5px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.3px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-copy" style="color: #2563EB; font-size: 15px;"></i>
-                <span>Official Templates & Department Response Files (${fld.files ? fld.files.length : 0}):</span>
+                <span>${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `Uploaded Department Reports (${prog.uploadedFiles ? prog.uploadedFiles.length : 0}):` : `Official Templates & Department Response Files (${fld.files ? fld.files.length : 0}):`}</span>
               </div>
 
-              ${!hasTemplate ? `
-                <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 8px; padding: 14px; font-size: 13px; color: #64748B; font-weight: 600;">
-                  <i class="fas fa-clock" style="color: #D97706; margin-right: 6px;"></i> No official templates released in this folder yet.
-                </div>
+              ${(fld.isPermanent || fld.isMultiReport || !hasTemplate) ? `
+                ${(prog.uploadedFiles && prog.uploadedFiles.length > 0) ? `
+                  <div style="display: grid; gap: 10px;">
+                    ${prog.uploadedFiles.map((respFile, rIdx) => {
+                      const fIcon = window.getFileIconInfo(respFile.name);
+                      return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #F0FDF4; border: 1.5px solid #86EFAC; border-left: 4px solid #16A34A; border-radius: 10px; padding: 12px 16px; flex-wrap: wrap; gap: 10px;">
+                          <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas ${fIcon.icon}" style="color: ${fIcon.color}; font-size: 22px;"></i>
+                            <div>
+                              <div style="font-size: 13.5px; font-weight: 800; color: #0F172A;">
+                                <span style="color: #16A34A;">#${rIdx + 1}</span> ${respFile.name}
+                                <span style="font-size: 11px; font-weight: 600; color: #64748B;">(${respFile.size || 'Document'})</span>
+                              </div>
+                              <div style="font-size: 11.5px; color: #475569; font-weight: 600; margin-top: 2px;">
+                                Uploaded: ${respFile.uploadDate || 'Recent'} by <strong>${respFile.author || fldRec?.author || dept.coordinator}</strong>
+                              </div>
+                            </div>
+                          </div>
+                          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #FFF; font-size: 12px; font-weight: 900; padding: 7px 14px; border-radius: 8px; box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);" onclick="openFileViewer('${encodeURIComponent(JSON.stringify(respFile))}', '${dept.code} Report: ${respFile.name}')">
+                              <i class="fas fa-eye"></i> View Report
+                            </button>
+                            <a href="${getFileDownloadUrl(respFile)}" download="${respFile.name}" target="_blank" class="ios-btn" style="background: #16A34A; color: #FFF; font-size: 11.5px; font-weight: 800; padding: 7px 14px; border-radius: 8px; text-decoration: none;">
+                              <i class="fas fa-download"></i> Download
+                            </a>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                ` : `
+                  <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 8px; padding: 14px; font-size: 13px; color: #64748B; font-weight: 600;">
+                    <i class="fas fa-clock" style="color: #D97706; margin-right: 6px;"></i> No reports submitted yet by ${dept.code} for AY ${state.selectedAcademicYear}.
+                  </div>
+                `}
               ` : `
                 <div style="display: grid; gap: 14px;">
                   ${fld.files.map((file, fileIdx) => {
@@ -2871,26 +3064,39 @@ function renderAdminDepartmentFolders(container) {
 
                   <!-- Chips / Key Metrics Row -->
                   <div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px 0;">
-                    <span class="folder-meta-chip folder-meta-chip-neutral">
-                      <i class="fas fa-file-excel" style="color: #2563EB;"></i>
-                      <span><strong>${prog.total}</strong> Official Template(s)</span>
-                    </span>
-                    ${prog.completed === 0 ? `
-                      <span class="folder-meta-chip folder-meta-chip-pending">
-                        <i class="fas fa-clock"></i>
-                        <span>0/${prog.total} Completed</span>
+                    ${fld.isPermanent ? `
+                      <span class="folder-meta-chip" style="background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE;">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Permanent Report Folder</span>
                       </span>
-                    ` : (prog.isPartial ? `
-                      <span class="folder-meta-chip folder-meta-chip-pending" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #FCD34D;">
-                        <i class="fas fa-hourglass-half"></i>
-                        <span><strong>${prog.completed} of ${prog.total}</strong> Completed (${prog.pending} Pending)</span>
+                    ` : ''}
+                    ${prog.isMulti ? `
+                      <span class="folder-meta-chip ${prog.uploadedFiles.length > 0 ? 'folder-meta-chip-success' : 'folder-meta-chip-neutral'}">
+                        <i class="fas fa-layer-group" style="color: ${prog.uploadedFiles.length > 0 ? '#16A34A' : '#2563EB'};"></i>
+                        <span><strong>${prog.uploadedFiles.length}</strong> Report(s) Uploaded</span>
                       </span>
                     ` : `
-                      <span class="folder-meta-chip folder-meta-chip-success">
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>All ${prog.total}</strong> Completed</span>
+                      <span class="folder-meta-chip folder-meta-chip-neutral">
+                        <i class="fas fa-file-excel" style="color: #2563EB;"></i>
+                        <span><strong>${prog.total}</strong> Official Template(s)</span>
                       </span>
-                    `)}
+                      ${prog.completed === 0 ? `
+                        <span class="folder-meta-chip folder-meta-chip-pending">
+                          <i class="fas fa-clock"></i>
+                          <span>0/${prog.total} Completed</span>
+                        </span>
+                      ` : (prog.isPartial ? `
+                        <span class="folder-meta-chip folder-meta-chip-pending" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #FCD34D;">
+                          <i class="fas fa-hourglass-half"></i>
+                          <span><strong>${prog.completed} of ${prog.total}</strong> Completed (${prog.pending} Pending)</span>
+                        </span>
+                      ` : `
+                        <span class="folder-meta-chip folder-meta-chip-success">
+                          <i class="fas fa-check-circle"></i>
+                          <span><strong>All ${prog.total}</strong> Completed</span>
+                        </span>
+                      `)}
+                    `}
                     ${fldRec && fldRec.coordinatorRemarks ? `
                       <span class="folder-meta-chip folder-meta-chip-neutral" style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${fldRec.coordinatorRemarks}">
                         <i class="fas fa-comment-dots" style="color: #881337;"></i>
@@ -2908,12 +3114,18 @@ function renderAdminDepartmentFolders(container) {
                     <span>•</span>
                     <span>AY ${state.selectedAcademicYear}</span>
                   </div>
-                  <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     ${(state.currentUser?.role === 'admin_coordinator') ? `
-                      <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 7px 12px; border-radius: 9px; display: inline-flex; align-items: center; gap: 5px;" onclick="event.stopPropagation(); handleDeleteFormatFolder('${fld.id}')" title="Delete this format folder across all departments">
-                        <i class="fas fa-trash-alt"></i>
-                        <span>Delete Folder</span>
+                      <button type="button" class="ios-btn" style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 11.5px; font-weight: 800; padding: 7px 12px; border-radius: 9px; display: inline-flex; align-items: center; gap: 5px;" onclick="event.stopPropagation(); openEditFolderModal('${fld.id}')" title="Edit folder name & description">
+                        <i class="fas fa-edit"></i>
+                        <span>Edit</span>
                       </button>
+                      ${!fld.isPermanent ? `
+                        <button type="button" class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 7px 12px; border-radius: 9px; display: inline-flex; align-items: center; gap: 5px;" onclick="event.stopPropagation(); handleDeleteFormatFolder('${fld.id}')" title="Delete this format folder across all departments">
+                          <i class="fas fa-trash-alt"></i>
+                          <span>Delete</span>
+                        </button>
+                      ` : ''}
                     ` : ''}
                     ${(fldRec && fldRec.uploadedFiles && fldRec.uploadedFiles.length > 0) ? `
                       <button type="button" class="ios-btn" style="background: #EFF6FF; border: 1.5px solid #93C5FD; color: #1D4ED8; font-size: 12px; font-weight: 800; padding: 7px 14px; border-radius: 9px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(37,99,235,0.08);" onclick="event.stopPropagation(); openFileViewer('${encodeURIComponent(JSON.stringify(fldRec.uploadedFiles[0]))}', '${dept.code} Response: ${fldRec.uploadedFiles[0].name}')" title="View submitted response directly without leaving">
