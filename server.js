@@ -396,6 +396,71 @@ app.post('/api/auth/register', async (req, res) => {
   res.json({ success: true, message: 'Institutional account registered successfully!', user: safeUser });
 });
 
+// Edit/Update Registered User (Admin only, protects 3 main leadership accounts)
+app.put('/api/users/:id', async (req, res) => {
+  const userId = req.params.id;
+  if (['usr-admin', 'usr-principal', 'usr-president'].includes(userId)) {
+    return res.status(403).json({ error: 'Cannot modify main institutional leadership accounts.' });
+  }
+
+  let users = readData('users.json') || [];
+  let target = users.find(u => u.id === userId);
+  if (!target && adminDb) {
+    try {
+      const doc = await adminDb.collection('users').doc(userId).get();
+      if (doc.exists) {
+        target = { id: doc.id, ...doc.data() };
+        users.push(target);
+      }
+    } catch (e) {}
+  }
+
+  if (!target) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+  if (['admin', 'principal', 'president'].includes((target.username || '').toLowerCase())) {
+    return res.status(403).json({ error: 'Cannot modify main institutional leadership accounts.' });
+  }
+
+  const { name, email, username, role, departmentId, password, designation } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Full name is required.' });
+  }
+
+  const cleanUsername = (username || target.username || '').trim().toLowerCase();
+  if (cleanUsername.length < 3) {
+    return res.status(400).json({ error: 'Username must be at least 3 characters.' });
+  }
+  if (['admin', 'principal', 'president'].includes(cleanUsername)) {
+    return res.status(403).json({ error: 'Reserved leadership username cannot be used.' });
+  }
+
+  const cleanEmail = (email || target.email || '').trim().toLowerCase();
+  const validRole = ['dept_coordinator', 'hod', 'tpo', 'dean_exam'].includes(role) ? role : target.role;
+  const autoDesignation = validRole === 'hod'
+    ? 'Head of Department'
+    : (validRole === 'tpo'
+      ? 'Training & Placement Officer (TPO)'
+      : (validRole === 'dean_exam' ? 'Dean Exam' : 'Accreditation Coordinator'));
+
+  target.name = name.trim();
+  target.username = cleanUsername;
+  target.email = cleanEmail;
+  target.role = validRole;
+  target.designation = designation ? designation.trim() : autoDesignation;
+  target.departmentId = departmentId !== undefined ? (departmentId || null) : target.departmentId;
+  if (password && password.trim().length >= 4) {
+    target.password = password.trim();
+  }
+  target.updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+  writeData('users.json', users);
+  await syncToFirestore('users', target.id, target);
+  logActivity('UPDATE_USER', 'Director IQAC', `Admin updated account: ${target.name} (@${target.username})`);
+  const { password: _, ...safeUser } = target;
+  res.json({ success: true, user: safeUser, message: `Account for ${target.name} updated successfully.` });
+});
+
 // Delete Registered User (Admin only)
 app.delete('/api/users/:id', (req, res) => {
   const users = readData('users.json');

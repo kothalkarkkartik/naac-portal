@@ -2567,6 +2567,10 @@ function renderUsersTableRows(usersList) {
       roleBadge = `<span class="ios-status-tag" style="background: #FFE4E6; color: #9F1239; border: 1.5px solid #FDA4AF; font-size: 11px; font-weight: 800;"><i class="fas fa-graduation-cap"></i> Principal</span>`;
     } else if (u.role === 'president') {
       roleBadge = `<span class="ios-status-tag" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; font-size: 11px; font-weight: 800;"><i class="fas fa-award"></i> Hon. President</span>`;
+    } else if (u.role === 'tpo') {
+      roleBadge = `<span class="ios-status-tag" style="background: #FAF5FF; color: #6B21A8; border: 1.5px solid #D8B4FE; font-size: 11px; font-weight: 800;"><i class="fas fa-briefcase"></i> TPO</span>`;
+    } else if (u.role === 'dean_exam') {
+      roleBadge = `<span class="ios-status-tag" style="background: #ECFEFF; color: #0E7490; border: 1.5px solid #A5F3FC; font-size: 11px; font-weight: 800;"><i class="fas fa-file-signature"></i> Dean Exam</span>`;
     } else {
       roleBadge = `<span class="ios-status-tag">${u.role}</span>`;
     }
@@ -2607,15 +2611,20 @@ function renderUsersTableRows(usersList) {
         <td style="font-size: 12px; font-weight: 700; color: #475569;">
           ${u.registeredAt || 'Active Official'}
         </td>
-        <td style="text-align: right;">
+        <td style="text-align: right; white-space: nowrap;">
           ${isLeadership ? `
             <span class="ios-status-tag" style="background: #F1F5F9; color: #475569; font-size: 11px; font-weight: 800; border: 1px solid #CBD5E1;">
               <i class="fas fa-lock"></i> Protected
             </span>
           ` : `
-            <button class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer;" onclick="handleDeleteRegisteredUser('${u.id}', '${u.name}')" title="Revoke this user account">
-              <i class="fas fa-trash-alt"></i> Revoke
-            </button>
+            <div style="display: inline-flex; gap: 6px; align-items: center;">
+              <button class="ios-btn" style="background: #EFF6FF; color: #1D4ED8; border: 1.5px solid #BFDBFE; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer;" onclick="openEditUserModal('${u.id}')" title="Edit user details, role, department or password">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+              <button class="ios-btn" style="background: #FEE2E2; color: #DC2626; border: 1.5px solid #FCA5A5; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer;" onclick="handleDeleteRegisteredUser('${u.id}', '${u.name}')" title="Revoke this user account">
+                <i class="fas fa-trash-alt"></i> Revoke
+              </button>
+            </div>
           `}
         </td>
       </tr>
@@ -2644,6 +2653,136 @@ window.filterRegisteredUsersTable = function() {
 
     row.style.display = (matchesQuery && matchesRole) ? '' : 'none';
   });
+};
+
+window.openEditUserModal = function(userId) {
+  const u = (state.allUsers || []).find(x => x.id === userId);
+  if (!u) {
+    showToast('User account not found.', 'error');
+    return;
+  }
+  const isLeadership = ['usr-admin', 'usr-principal', 'usr-president'].includes(u.id) || ['admin', 'principal', 'president'].includes(u.username);
+  if (isLeadership) {
+    showToast('Main institutional leadership accounts cannot be edited.', 'warning');
+    return;
+  }
+
+  const overlay = document.getElementById('workflow-modal-overlay');
+  const content = document.getElementById('workflow-modal-content');
+  if (!overlay || !content) return;
+
+  const deptOptions = (state.departments || []).map(d =>
+    `<option value="${d.id}" ${u.departmentId === d.id ? 'selected' : ''}>${d.name} (${d.code})</option>`
+  ).join('');
+
+  content.innerHTML = `
+    <div style="padding: 22px 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1.5px solid #E2E8F0; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+            <i class="fas fa-user-edit"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 17px; font-weight: 800; color: #0F172A; margin: 0;">Edit User Account</h3>
+            <span style="font-size: 12px; font-weight: 600; color: #64748B;">@${u.username} • Update profile, role, department or reset password</span>
+          </div>
+        </div>
+        <button type="button" class="ios-btn" style="background: #F1F5F9; color: #475569; font-weight: 800; padding: 6px 12px; border-radius: 8px;" onclick="window.closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveEditedUser('${u.id}', event)">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="ios-form-group" style="margin-bottom: 0;">
+            <label class="ios-label" style="font-size: 11.5px; font-weight: 800;">Full Name *</label>
+            <input type="text" id="edit-user-name" class="ios-input" value="${(u.name || '').replace(/"/g, '&quot;')}" required style="padding: 8px 12px; font-size: 13px; font-weight: 700;" />
+          </div>
+          <div class="ios-form-group" style="margin-bottom: 0;">
+            <label class="ios-label" style="font-size: 11.5px; font-weight: 800;">Username *</label>
+            <input type="text" id="edit-user-username" class="ios-input" value="${(u.username || '').replace(/"/g, '&quot;')}" required style="padding: 8px 12px; font-size: 13px; font-weight: 700;" />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="ios-form-group" style="margin-bottom: 0;">
+            <label class="ios-label" style="font-size: 11.5px; font-weight: 800;">Gmail Address</label>
+            <input type="email" id="edit-user-email" class="ios-input" value="${(u.email || '').replace(/"/g, '&quot;')}" style="padding: 8px 12px; font-size: 13px; font-weight: 700;" />
+          </div>
+          <div class="ios-form-group" style="margin-bottom: 0;">
+            <label class="ios-label" style="font-size: 11.5px; font-weight: 800;">Role / Designation</label>
+            <select id="edit-user-role" class="ios-input" style="padding: 8px 10px; font-size: 12.5px; font-weight: 700;">
+              <option value="dept_coordinator" ${u.role === 'dept_coordinator' ? 'selected' : ''}>Department Coordinator</option>
+              <option value="hod" ${u.role === 'hod' ? 'selected' : ''}>Head of Department (HOD)</option>
+              <option value="tpo" ${u.role === 'tpo' ? 'selected' : ''}>Training & Placement Officer (TPO)</option>
+              <option value="dean_exam" ${u.role === 'dean_exam' ? 'selected' : ''}>Dean Exam</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ios-form-group" style="margin-bottom: 12px;">
+          <label class="ios-label" style="font-size: 11.5px; font-weight: 800;">Department / Unit</label>
+          <select id="edit-user-dept" class="ios-input" style="padding: 8px 10px; font-size: 12.5px; font-weight: 700;">
+            ${deptOptions}
+          </select>
+        </div>
+
+        <div class="ios-form-group" style="margin-bottom: 20px;">
+          <label class="ios-label" style="font-size: 11.5px; font-weight: 800;">New Password <span style="color:#64748B; font-weight:600;">(Optional — leave blank to keep current password)</span></label>
+          <input type="text" id="edit-user-password" class="ios-input" placeholder="Enter new password (min 4 chars) to reset" style="padding: 8px 12px; font-size: 13px; font-weight: 700;" />
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="ios-btn" style="background: #F1F5F9; color: #334155; font-size: 13px; font-weight: 800; padding: 9px 18px; border-radius: 9px;" onclick="window.closeModal()">
+            Cancel
+          </button>
+          <button type="submit" class="ios-btn" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #FFF; font-size: 13px; font-weight: 800; padding: 9px 22px; border-radius: 9px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);">
+            <i class="fas fa-save" style="margin-right: 6px;"></i> Save Account Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  overlay.style.display = 'flex';
+};
+
+window.handleSaveEditedUser = async function(userId, event) {
+  if (event) event.preventDefault();
+  const name = document.getElementById('edit-user-name')?.value?.trim();
+  const username = document.getElementById('edit-user-username')?.value?.trim();
+  const email = document.getElementById('edit-user-email')?.value?.trim();
+  const role = document.getElementById('edit-user-role')?.value;
+  const departmentId = document.getElementById('edit-user-dept')?.value;
+  const password = document.getElementById('edit-user-password')?.value?.trim();
+
+  if (!name || !username) {
+    showToast('Name and username are required.', 'warning');
+    return;
+  }
+  if (password && password.length < 4) {
+    showToast('New password must be at least 4 characters.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/users/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, username, email, role, departmentId, password: password || undefined })
+    }).then(r => r.json());
+
+    if (res.success) {
+      window.closeModal();
+      showToast(res.message || 'User account updated successfully!', 'success');
+      await loadInitialData();
+      renderActiveView();
+    } else {
+      showToast(res.error || 'Failed to update user.', 'error');
+    }
+  } catch (err) {
+    console.debug('Edit user error:', err);
+    showToast('Unable to update user account.', 'error');
+  }
 };
 
 window.handleDeleteRegisteredUser = async function(userId, userName) {
@@ -2883,6 +3022,11 @@ function renderAdminDepartmentFolders(container) {
                             <a href="${getFileDownloadUrl(file)}" download="${file.name}" target="_blank" class="ios-btn" style="background: #FFF; border: 1.5px solid #CBD5E1; color: #0F172A; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
                               <i class="fas fa-download"></i> Download
                             </a>
+                            ${state.currentUser?.role === 'admin_coordinator' ? `
+                              <button type="button" class="ios-btn" style="background: #FEE2E2; border: 1.5px solid #FCA5A5; color: #DC2626; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;" onclick="handleDeleteFileFromFolder('${fld.id}', '${file.id}')" title="Delete this template file">
+                                <i class="fas fa-trash-alt"></i> Delete Template
+                              </button>
+                            ` : ''}
                           </div>
                         </div>
 
