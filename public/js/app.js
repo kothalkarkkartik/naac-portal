@@ -696,7 +696,7 @@ window.getEffectiveUserDeptId = function() {
 function renderCoordinatorYearwiseWorkspace(container) {
   const isTpoUser = state.currentUser?.role === 'tpo';
   const isHodUser = state.currentUser?.role === 'hod';
-  const submitTargetLabel = (isHodUser || isTpoUser) ? 'NAAC Coordinator' : 'HOD';
+  const submitTargetLabel = (isHodUser || isTpoUser) ? 'NAAC Coordinator' : 'HOD / NAAC Coordinator';
   const dept = isTpoUser
     ? { id: 'unit-tpo', name: 'Training & Placement Cell (TPO)', code: 'TPO', section: 'Confidential Placement Cell', coordinator: state.currentUser.name, hod: 'Director IQAC (Admin)' }
     : (state.departments.find(d => d.id === state.currentUser.departmentId) || state.departments[0]);
@@ -1452,7 +1452,7 @@ window.handleAdminDeleteResponseFile = async function(recId, filename, folderId,
 window.submitFolderToHOD = async function(folderId) {
   const deptId = window.getEffectiveUserDeptId();
   const year = state.selectedAcademicYear;
-  const targetLabel = (state.currentUser?.role === 'hod' || state.currentUser?.role === 'tpo') ? 'NAAC Coordinator' : 'HOD';
+  const targetLabel = (state.currentUser?.role === 'hod' || state.currentUser?.role === 'tpo') ? 'NAAC Coordinator' : 'HOD / NAAC Coordinator';
 
   const fld = (state.formatFolders || []).find(f => f.id === folderId);
   let rec = state.yearwiseRecords.find(r => 
