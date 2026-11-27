@@ -193,5 +193,18 @@
     "established": 2001,
     "intake": 0,
     "description": "Campus placement drives, corporate relations, student internships, offer letters, and annual placement records."
+  },
+  {
+    "id": "unit-exam",
+    "name": "Examination Cell (Dean Exam)",
+    "shortName": "Dean Exam",
+    "section": "Support & Functional Units",
+    "category": "support",
+    "hod": "Director IQAC (Admin)",
+    "coordinator": "Dean Examination",
+    "code": "UNIT-EXAM",
+    "established": 2001,
+    "intake": 0,
+    "description": "University & MSBTE examination schedules, result analysis, grade sheets, revaluation records, and assessment reports."
   }
 ]

@@ -447,6 +447,7 @@ function setupRoleNavigation(role) {
   switch (role) {
     case 'dept_coordinator':
     case 'tpo':
+    case 'dean_exam':
       // The 3 old tabs are completely removed as requested!
       navItems = [
         { id: 'coord-annual-upload', label: 'Annual Criteria Submissions (2023 - 2027)', icon: 'fa-file-excel' }
@@ -531,7 +532,7 @@ async function renderActiveView() {
 
   const role = state.currentUser.role;
 
-  if (role === 'dept_coordinator' || role === 'tpo') {
+  if (role === 'dept_coordinator' || role === 'tpo' || role === 'dean_exam') {
     renderCoordinatorYearwiseWorkspace(main);
   } else if (role === 'hod') {
     if (state.activeTab === 'hod-upload') renderCoordinatorYearwiseWorkspace(main);
@@ -686,6 +687,7 @@ window.renderFolderStatusBadge = function(fld, fldRec) {
 
 window.getEffectiveUserDeptId = function() {
   if (state.currentUser?.role === 'tpo') return 'unit-tpo';
+  if (state.currentUser?.role === 'dean_exam') return 'unit-exam';
   const matched = (state.departments || []).find(d => d.id === state.currentUser?.departmentId);
   return matched ? matched.id : (state.departments?.[0]?.id || state.currentUser?.departmentId);
 };
@@ -695,16 +697,19 @@ window.getEffectiveUserDeptId = function() {
 // ==========================================================================
 function renderCoordinatorYearwiseWorkspace(container) {
   const isTpoUser = state.currentUser?.role === 'tpo';
+  const isExamUser = state.currentUser?.role === 'dean_exam';
   const isHodUser = state.currentUser?.role === 'hod';
-  const submitTargetLabel = (isHodUser || isTpoUser) ? 'NAAC Coordinator' : 'HOD / NAAC Coordinator';
+  const submitTargetLabel = (isHodUser || isTpoUser || isExamUser) ? 'NAAC Coordinator' : 'HOD / NAAC Coordinator';
   const dept = isTpoUser
     ? { id: 'unit-tpo', name: 'Training & Placement Cell (TPO)', code: 'TPO', section: 'Confidential Placement Cell', coordinator: state.currentUser.name, hod: 'Director IQAC (Admin)' }
-    : (state.departments.find(d => d.id === state.currentUser.departmentId) || state.departments[0]);
-  const folders = (state.formatFolders || []).filter(f =>
-    isTpoUser
-      ? (f.isTpoFolder || f.id === 'fld-tpo-permanent')
-      : (!f.isTpoFolder && f.id !== 'fld-tpo-permanent')
-  );
+    : (isExamUser
+      ? { id: 'unit-exam', name: 'Examination Cell (Dean Exam)', code: 'EXAM', section: 'Confidential Examination Cell', coordinator: state.currentUser.name, hod: 'Director IQAC (Admin)' }
+      : (state.departments.find(d => d.id === state.currentUser.departmentId) || state.departments[0]));
+  const folders = (state.formatFolders || []).filter(f => {
+    if (isTpoUser) return f.isTpoFolder || f.id === 'fld-tpo-permanent';
+    if (isExamUser) return f.isExamFolder || f.id === 'fld-exam-permanent';
+    return !f.isTpoFolder && f.id !== 'fld-tpo-permanent' && !f.isExamFolder && f.id !== 'fld-exam-permanent';
+  });
 
   container.innerHTML = `
     <!-- Top Action Header: Department Identity + Yearwise Selector -->
@@ -843,7 +848,7 @@ function renderCoordinatorYearwiseWorkspace(container) {
                           <span style="background: #1E40AF; color: #FFF; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 12px;">SUBMITTED</span>
                         </div>
                         <div style="font-size: 12.5px; font-weight: 700; color: #1E3A8A; margin-top: 3px;">
-                          Submission Recorded on <strong>${fldRec.coordinatorSubmittedAt || 'Recently'}</strong> • Under Review by ${(isHodUser || isTpoUser) ? '<strong>NAAC Coordinator (Director IQAC)</strong>' : `HOD <strong>(${dept.hod})</strong>`}
+                          Submission Recorded on <strong>${fldRec.coordinatorSubmittedAt || 'Recently'}</strong> • Under Review by ${(isHodUser || isTpoUser || isExamUser) ? '<strong>NAAC Coordinator (Director IQAC)</strong>' : `HOD <strong>(${dept.hod})</strong>`}
                         </div>
                       </div>
                     </div>
@@ -1452,7 +1457,7 @@ window.handleAdminDeleteResponseFile = async function(recId, filename, folderId,
 window.submitFolderToHOD = async function(folderId) {
   const deptId = window.getEffectiveUserDeptId();
   const year = state.selectedAcademicYear;
-  const targetLabel = (state.currentUser?.role === 'hod' || state.currentUser?.role === 'tpo') ? 'NAAC Coordinator' : 'HOD / NAAC Coordinator';
+  const targetLabel = (state.currentUser?.role === 'hod' || state.currentUser?.role === 'tpo' || state.currentUser?.role === 'dean_exam') ? 'NAAC Coordinator' : 'HOD / NAAC Coordinator';
 
   const fld = (state.formatFolders || []).find(f => f.id === folderId);
   let rec = state.yearwiseRecords.find(r => 
@@ -1671,7 +1676,7 @@ window.submitYearToHOD = async function(recId) {
 // ==========================================================================
 function renderHodYearwiseReview(container) {
   const dept = state.departments.find(d => d.id === state.currentUser.departmentId) || state.departments[0];
-  const deptRecords = state.yearwiseRecords.filter(r => r.departmentId === dept.id && r.folderId !== 'fld-tpo-permanent');
+  const deptRecords = state.yearwiseRecords.filter(r => r.departmentId === dept.id && r.folderId !== 'fld-tpo-permanent' && r.folderId !== 'fld-exam-permanent');
 
   container.innerHTML = `
     <div class="ios-card">
@@ -2009,6 +2014,10 @@ function renderAdminMasterTemplateManager(container) {
                         <span class="ios-status-tag" style="background: #FAF5FF; color: #6B21A8; border: 1.5px solid #D8B4FE; font-size: 11px; font-weight: 800; margin-left: 8px;">
                           <i class="fas fa-lock"></i> Confidential: Admin & TPO Only (${(fld.files || []).length} Templates)
                         </span>
+                      ` : (fld.isExamFolder ? `
+                        <span class="ios-status-tag" style="background: #ECFEFF; color: #0E7490; border: 1.5px solid #A5F3FC; font-size: 11px; font-weight: 800; margin-left: 8px;">
+                          <i class="fas fa-lock"></i> Confidential: Admin & Dean Exam Only (${(fld.files || []).length} Templates)
+                        </span>
                       ` : (fld.isPermanent ? `
                         <span class="ios-status-tag" style="background: #EEF2FF; color: #4338CA; border: 1.5px solid #C7D2FE; font-size: 11px; font-weight: 800; margin-left: 8px;">
                           <i class="fas fa-layer-group"></i> Permanent Multi-Report Folder
@@ -2017,7 +2026,7 @@ function renderAdminMasterTemplateManager(container) {
                         <span class="ios-status-tag" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; font-size: 11px; font-weight: 800; margin-left: 8px;">
                           ${(fld.files || []).length} Files
                         </span>
-                      `)}
+                      `))}
                     </div>
                   </div>
                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -2456,6 +2465,7 @@ async function renderAdminRegisteredUsers(container) {
   const coords = users.filter(u => u.role === 'dept_coordinator');
   const hods = users.filter(u => u.role === 'hod');
   const tpos = users.filter(u => u.role === 'tpo');
+  const deanExams = users.filter(u => u.role === 'dean_exam');
   const executives = users.filter(u => ['admin_coordinator', 'principal', 'president'].includes(u.role));
 
   container.innerHTML = `
@@ -2499,6 +2509,7 @@ async function renderAdminRegisteredUsers(container) {
               <option value="dept_coordinator">Department Coordinators (${coords.length})</option>
               <option value="hod">Head of Departments (${hods.length})</option>
               <option value="tpo">Training & Placement Officers (${tpos.length})</option>
+              <option value="dean_exam">Dean Exam (${deanExams.length})</option>
               <option value="exec">College Leadership (${executives.length})</option>
             </select>
           </div>
@@ -2667,15 +2678,18 @@ function renderAdminDepartmentFolders(container) {
 
   if (selectedDeptId) {
     const isTpoDept = selectedDeptId === 'unit-tpo';
+    const isExamDept = selectedDeptId === 'unit-exam';
     const dept = isTpoDept
       ? { id: 'unit-tpo', name: 'Training & Placement Cell (TPO)', code: 'TPO', section: 'Confidential Placement Cell', coordinator: 'TPO Officer', hod: 'Director IQAC (Admin)', established: 2001, intake: 0 }
-      : (departments.find(d => d.id === selectedDeptId) || departments[0]);
+      : (isExamDept
+        ? { id: 'unit-exam', name: 'Examination Cell (Dean Exam)', code: 'EXAM', section: 'Confidential Examination Cell', coordinator: 'Dean Exam', hod: 'Director IQAC (Admin)', established: 2001, intake: 0 }
+        : (departments.find(d => d.id === selectedDeptId) || departments[0]));
     const deptRecords = records.filter(r => r.departmentId === dept.id);
-    const folders = (state.formatFolders || []).filter(f =>
-      isTpoDept
-        ? (f.isTpoFolder || f.id === 'fld-tpo-permanent')
-        : (!f.isTpoFolder && f.id !== 'fld-tpo-permanent')
-    );
+    const folders = (state.formatFolders || []).filter(f => {
+      if (isTpoDept) return f.isTpoFolder || f.id === 'fld-tpo-permanent';
+      if (isExamDept) return f.isExamFolder || f.id === 'fld-exam-permanent';
+      return !f.isTpoFolder && f.id !== 'fld-tpo-permanent' && !f.isExamFolder && f.id !== 'fld-exam-permanent';
+    });
     const openFormatFolderId = state.selectedAdminFormatFolder;
     const openFld = openFormatFolderId ? folders.find(f => f.id === openFormatFolderId) : null;
 
@@ -2782,21 +2796,21 @@ function renderAdminDepartmentFolders(container) {
             </div>
 
             <!-- Official Templates & Department Response Pairs -->
-            ${(fld.isTpoFolder && state.currentUser?.role === 'admin_coordinator') ? `
-              <div style="background: #FAF5FF; border: 2px dashed #C084FC; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            ${((fld.isTpoFolder || fld.isExamFolder) && state.currentUser?.role === 'admin_coordinator') ? `
+              <div style="background: ${fld.isExamFolder ? '#ECFEFF' : '#FAF5FF'}; border: 2px dashed ${fld.isExamFolder ? '#06B6D4' : '#C084FC'}; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                 <div>
-                  <div style="font-size: 13.5px; font-weight: 800; color: #581C87; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-cloud-upload-alt" style="color: #7E22CE;"></i>
-                    <span>Upload Official Template for TPO</span>
+                  <div style="font-size: 13.5px; font-weight: 800; color: ${fld.isExamFolder ? '#164E63' : '#581C87'}; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-cloud-upload-alt" style="color: ${fld.isExamFolder ? '#0891B2' : '#7E22CE'};"></i>
+                    <span>Upload Official Template for ${fld.isExamFolder ? 'Dean Exam' : 'TPO'}</span>
                   </div>
-                  <div style="font-size: 11.5px; color: #6B21A8; font-weight: 600; margin-top: 2px;">
-                    Admin can directly add Excel, Word, or PDF templates here — TPO will immediately see and download them.
+                  <div style="font-size: 11.5px; color: ${fld.isExamFolder ? '#0E7490' : '#6B21A8'}; font-weight: 600; margin-top: 2px;">
+                    Admin can directly add Excel, Word, or PDF templates here — ${fld.isExamFolder ? 'Dean Exam' : 'TPO'} will immediately see and download them.
                   </div>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                   <input type="file" id="folder-upload-input-${fld.id}" class="ios-input" accept="*/*" style="width: auto; padding: 6px 10px; font-size: 12px; font-weight: 700; background: #FFF;" />
-                  <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #7E22CE 0%, #6B21A8 100%); color: #FFF; font-size: 12px; font-weight: 800; padding: 8px 16px; border-radius: 8px;" onclick="handleUploadFileToFolder('${fld.id}')">
-                    <i class="fas fa-plus"></i> Upload Template to TPO
+                  <button type="button" class="ios-btn" style="background: linear-gradient(135deg, ${fld.isExamFolder ? '#0891B2 0%, #0E7490 100%' : '#7E22CE 0%, #6B21A8 100%'}); color: #FFF; font-size: 12px; font-weight: 800; padding: 8px 16px; border-radius: 8px;" onclick="handleUploadFileToFolder('${fld.id}')">
+                    <i class="fas fa-plus"></i> Upload Template to ${fld.isExamFolder ? 'Dean Exam' : 'TPO'}
                   </button>
                 </div>
               </div>
@@ -3250,8 +3264,12 @@ function renderAdminDepartmentFolders(container) {
             const tpoFilesCount = tpoRecs.reduce((acc, r) => acc + ((r.uploadedFiles && r.uploadedFiles.length) ? r.uploadedFiles.length : (r.excelFile ? 1 : 0)), 0);
             const tpoFld = (state.formatFolders || []).find(f => f.isTpoFolder || f.id === 'fld-tpo-permanent');
             const tpoTplCount = tpoFld?.files ? tpoFld.files.length : 0;
+            const examRecs = records.filter(r => (r.departmentId === 'unit-exam' || r.folderId === 'fld-exam-permanent') && (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)));
+            const examFilesCount = examRecs.reduce((acc, r) => acc + ((r.uploadedFiles && r.uploadedFiles.length) ? r.uploadedFiles.length : (r.excelFile ? 1 : 0)), 0);
+            const examFld = (state.formatFolders || []).find(f => f.isExamFolder || f.id === 'fld-exam-permanent');
+            const examTplCount = examFld?.files ? examFld.files.length : 0;
             return `
-              <div onclick="openDepartmentFolder('unit-tpo')" style="cursor: pointer; background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%); border: 2px solid #C084FC; border-left: 6px solid #7E22CE; border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 14px rgba(126, 34, 206, 0.08);">
+              <div onclick="openDepartmentFolder('unit-tpo')" style="cursor: pointer; background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%); border: 2px solid #C084FC; border-left: 6px solid #7E22CE; border-radius: 16px; padding: 16px 20px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 14px rgba(126, 34, 206, 0.08);">
                 <div style="display: flex; align-items: center; gap: 14px;">
                   <div style="width: 48px; height: 48px; border-radius: 14px; background: #7E22CE; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;">
                     <i class="fas fa-briefcase"></i>
@@ -3270,10 +3288,30 @@ function renderAdminDepartmentFolders(container) {
                   <i class="fas fa-folder-open"></i> Open TPO Workspace
                 </button>
               </div>
+
+              <div onclick="openDepartmentFolder('unit-exam')" style="cursor: pointer; background: linear-gradient(135deg, #ECFEFF 0%, #CFFAFE 100%); border: 2px solid #22D3EE; border-left: 6px solid #0891B2; border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 14px rgba(8, 145, 178, 0.08);">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div style="width: 48px; height: 48px; border-radius: 14px; background: #0891B2; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;">
+                    <i class="fas fa-file-signature"></i>
+                  </div>
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                      <h4 style="font-size: 16px; font-weight: 800; color: #164E63; margin: 0;">Examination Cell (Dean Exam) — Confidential Folder</h4>
+                      <span class="ios-status-tag" style="background: #FFFFFF; color: #0E7490; border: 1.5px solid #A5F3FC; font-size: 10.5px; font-weight: 800;"><i class="fas fa-lock"></i> Admin & Dean Exam Only</span>
+                    </div>
+                    <div style="font-size: 12.5px; font-weight: 600; color: #0E7490; margin-top: 3px;">
+                      <strong>${examTplCount}</strong> Template(s) Released by Admin • <strong>${examFilesCount}</strong> Exam Report(s) Uploaded
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="ios-btn" style="background: #0891B2; color: #FFF; font-size: 12px; font-weight: 800; padding: 8px 16px; border-radius: 9px;">
+                  <i class="fas fa-folder-open"></i> Open Dean Exam Workspace
+                </button>
+              </div>
             `;
           })()}
           <div class="responsive-dept-grid">
-            ${departments.filter(d => d.id !== 'unit-tpo').map(d => {
+            ${departments.filter(d => d.id !== 'unit-tpo' && d.id !== 'unit-exam').map(d => {
               const deptRecs = records.filter(r => r.departmentId === d.id && (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)));
               const hasUploads = deptRecs.length > 0;
               const hasRejected = deptRecs.some(r => r.status === 'returned_for_revision' || r.status === 'rejected');
@@ -3782,17 +3820,19 @@ function renderExecutiveSubmissionsDesk(container, executiveRole = 'principal') 
   const folders = state.formatFolders || [];
   const currentFilterYear = state.selectedExecutiveYearFilter || 'all';
 
-  // Filter records with uploaded criteria responses (exclude confidential TPO-only files from general executive file list)
+  // Filter records with uploaded criteria responses (exclude confidential TPO/Dean Exam files from general executive file list)
   let activeRecords = records.filter(r =>
     (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)) &&
     r.departmentId !== 'unit-tpo' &&
-    r.folderId !== 'fld-tpo-permanent'
+    r.folderId !== 'fld-tpo-permanent' &&
+    r.departmentId !== 'unit-exam' &&
+    r.folderId !== 'fld-exam-permanent'
   );
   if (currentFilterYear !== 'all') {
     activeRecords = activeRecords.filter(r => r.academicYear === currentFilterYear);
   }
 
-  // Confidential TPO Work & Upload Activity Status (Visible to Principal & President, files restricted to Admin & TPO)
+  // Confidential TPO & Dean Exam Work & Upload Activity Status
   const tpoRecords = records.filter(r => (r.departmentId === 'unit-tpo' || r.folderId === 'fld-tpo-permanent') && (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)));
   const tpoTotalFiles = tpoRecords.reduce((acc, r) => acc + ((r.uploadedFiles && r.uploadedFiles.length) ? r.uploadedFiles.length : (r.excelFile ? 1 : 0)), 0);
   const tpoLatestRec = [...tpoRecords].sort((a, b) => (b.updatedAt || b.coordinatorSubmittedAt || b.createdAt || '').localeCompare(a.updatedAt || a.coordinatorSubmittedAt || a.createdAt || ''))[0];
@@ -3800,6 +3840,14 @@ function renderExecutiveSubmissionsDesk(container, executiveRole = 'principal') 
   const tpoOfficerName = tpoLatestRec?.author || tpoUsers[0]?.name || 'TPO Officer';
   const tpoActiveYears = [...new Set(tpoRecords.map(r => r.academicYear))].join(', ');
   const tpoWorking = tpoTotalFiles > 0;
+
+  const examRecords = records.filter(r => (r.departmentId === 'unit-exam' || r.folderId === 'fld-exam-permanent') && (r.excelFile || (r.uploadedFiles && r.uploadedFiles.length > 0)));
+  const examTotalFiles = examRecords.reduce((acc, r) => acc + ((r.uploadedFiles && r.uploadedFiles.length) ? r.uploadedFiles.length : (r.excelFile ? 1 : 0)), 0);
+  const examLatestRec = [...examRecords].sort((a, b) => (b.updatedAt || b.coordinatorSubmittedAt || b.createdAt || '').localeCompare(a.updatedAt || a.coordinatorSubmittedAt || a.createdAt || ''))[0];
+  const examUsers = (state.allUsers || []).filter(u => u.role === 'dean_exam');
+  const examOfficerName = examLatestRec?.author || examUsers[0]?.name || 'Dean Exam';
+  const examActiveYears = [...new Set(examRecords.map(r => r.academicYear))].join(', ');
+  const examWorking = examTotalFiles > 0;
 
   // Calculate Key Institutional Metrics
   const totalSubmissions = activeRecords.length;
@@ -3891,6 +3939,35 @@ function renderExecutiveSubmissionsDesk(container, executiveRole = 'principal') 
       </div>
       <div style="background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 10px; padding: 8px 14px; font-size: 12px; font-weight: 800; color: #0F172A;">
         Status: ${tpoWorking ? (tpoLatestRec?.status === 'iqac_verified' ? '✓ IQAC Verified' : (tpoLatestRec?.status === 'submitted_to_hod' ? 'Submitted to IQAC Admin' : 'Draft / Uploading')) : 'Awaiting Upload'}
+      </div>
+    </div>
+
+    <!-- Dean Exam Cell Work & Upload Activity Monitor -->
+    <div style="background: ${examWorking ? 'linear-gradient(135deg, #ECFEFF 0%, #CFFAFE 100%)' : 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)'}; border: 2px solid ${examWorking ? '#22D3EE' : '#FCD34D'}; border-left: 6px solid ${examWorking ? '#0891B2' : '#D97706'}; border-radius: 14px; padding: 16px 20px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 3px 12px rgba(0,0,0,0.04);">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 46px; height: 46px; border-radius: 12px; background: ${examWorking ? '#0891B2' : '#D97706'}; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+          <i class="fas ${examWorking ? 'fa-file-signature' : 'fa-hourglass-half'}"></i>
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="font-size: 15px; font-weight: 900; color: #0F172A;">Dean Exam Work & Upload Activity</span>
+            <span class="ios-status-tag" style="background: ${examWorking ? '#ECFEFF' : '#FEF3C7'}; color: ${examWorking ? '#0E7490' : '#92400E'}; border: 1.5px solid ${examWorking ? '#A5F3FC' : '#F59E0B'}; font-size: 11px; font-weight: 800;">
+              ${examWorking ? `● ACTIVE — ${examTotalFiles} File(s) Uploaded` : '○ PENDING — No Uploads Yet'}
+            </span>
+          </div>
+          <div style="font-size: 12.5px; font-weight: 600; color: #334155; margin-top: 4px;">
+            ${examWorking
+              ? `Officer: <strong>${examOfficerName}</strong> • Active AY: <strong>${examActiveYears}</strong> • Last Activity: <strong>${examLatestRec?.updatedAt || examLatestRec?.coordinatorSubmittedAt || examLatestRec?.createdAt || 'Recent'}</strong>`
+              : `Dean Exam (${examOfficerName}) has not uploaded examination reports yet.`
+            }
+          </div>
+          <div style="font-size: 11px; font-weight: 700; color: #64748B; margin-top: 3px;">
+            <i class="fas fa-lock" style="color: #0891B2;"></i> Confidential Workspace: Actual examination files are restricted to Dean Exam & IQAC Admin; live work status is visible here.
+          </div>
+        </div>
+      </div>
+      <div style="background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 10px; padding: 8px 14px; font-size: 12px; font-weight: 800; color: #0F172A;">
+        Status: ${examWorking ? (examLatestRec?.status === 'iqac_verified' ? '✓ IQAC Verified' : (examLatestRec?.status === 'submitted_to_hod' ? 'Submitted to IQAC Admin' : 'Draft / Uploading')) : 'Awaiting Upload'}
       </div>
     </div>
 
@@ -4309,6 +4386,7 @@ function formatRoleName(role) {
     case 'president': return 'Hon. President';
     case 'hod': return 'Head of Department (HOD)';
     case 'tpo': return 'Training & Placement Officer (TPO)';
+    case 'dean_exam': return 'Dean Exam';
     case 'dept_coordinator': return 'Department Coordinator';
     default: return role;
   }

@@ -359,11 +359,13 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'This Gmail address is already registered. Please sign in or use another Gmail.' });
   }
 
-  const assignedRole = role === 'hod' ? 'hod' : (role === 'tpo' ? 'tpo' : 'dept_coordinator');
+  const assignedRole = role === 'hod' ? 'hod' : (role === 'tpo' ? 'tpo' : (role === 'dean_exam' ? 'dean_exam' : 'dept_coordinator'));
   const assignedDesignation = designation || (
     assignedRole === 'hod'
       ? 'Head of Department'
-      : (assignedRole === 'tpo' ? 'Training & Placement Officer (TPO)' : 'Accreditation Coordinator')
+      : (assignedRole === 'tpo'
+        ? 'Training & Placement Officer (TPO)'
+        : (assignedRole === 'dean_exam' ? 'Dean Exam' : 'Accreditation Coordinator'))
   );
 
   const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
@@ -909,6 +911,18 @@ const PERMANENT_TPO_FOLDER = {
   files: []
 };
 
+const PERMANENT_EXAM_FOLDER = {
+  id: 'fld-exam-permanent',
+  title: 'Dean Exam Formats & Examination Reports',
+  description: 'Confidential workspace for Dean Exam and IQAC Admin. Admin provides examination templates here; Dean Exam uploads result analysis, exam reports, and assessment records.',
+  createdAt: '2026-11-27 11:25',
+  createdBy: 'Institutional System / Director IQAC',
+  isPermanent: true,
+  isExamFolder: true,
+  isMultiReport: true,
+  files: []
+};
+
 async function getAllFormatFolders() {
   let folders = [];
   if (adminDb) {
@@ -954,6 +968,16 @@ async function getAllFormatFolders() {
     folders[tpoIdx].isPermanent = true;
     folders[tpoIdx].isTpoFolder = true;
     folders[tpoIdx].isMultiReport = true;
+  }
+
+  // Ensure Permanent Confidential Dean Exam Folder always exists for Admin & Dean Exam
+  const examIdx = folders.findIndex(f => f.id === PERMANENT_EXAM_FOLDER.id);
+  if (examIdx === -1) {
+    folders.push({ ...PERMANENT_EXAM_FOLDER });
+  } else {
+    folders[examIdx].isPermanent = true;
+    folders[examIdx].isExamFolder = true;
+    folders[examIdx].isMultiReport = true;
   }
 
   writeData('format_folders.json', folders);
@@ -1040,7 +1064,7 @@ app.put('/api/format-folders/:id', async (req, res) => {
 });
 
 app.delete('/api/format-folders/:id', async (req, res) => {
-  if (req.params.id === 'fld-permanent-reports' || req.params.id === 'fld-tpo-permanent') {
+  if (req.params.id === 'fld-permanent-reports' || req.params.id === 'fld-tpo-permanent' || req.params.id === 'fld-exam-permanent') {
     return res.status(400).json({ error: 'Permanent institutional folder cannot be deleted.' });
   }
 

@@ -21,6 +21,17 @@
     "files": []
   },
   {
+    "id": "fld-exam-permanent",
+    "title": "Dean Exam Formats & Examination Reports",
+    "description": "Confidential workspace for Dean Exam and IQAC Admin. Admin provides examination templates here; Dean Exam uploads result analysis, exam reports, and assessment records.",
+    "createdAt": "2026-11-27 11:25",
+    "createdBy": "Institutional System / Director IQAC",
+    "isPermanent": true,
+    "isExamFolder": true,
+    "isMultiReport": true,
+    "files": []
+  },
+  {
     "id": "fld-1795252350943",
     "createdAt": "2026-11-21 09:12",
     "createdBy": "Director IQAC",
