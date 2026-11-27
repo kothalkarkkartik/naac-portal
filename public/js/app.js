@@ -695,6 +695,8 @@ window.getEffectiveUserDeptId = function() {
 // ==========================================================================
 function renderCoordinatorYearwiseWorkspace(container) {
   const isTpoUser = state.currentUser?.role === 'tpo';
+  const isHodUser = state.currentUser?.role === 'hod';
+  const submitTargetLabel = (isHodUser || isTpoUser) ? 'NAAC Coordinator' : 'HOD';
   const dept = isTpoUser
     ? { id: 'unit-tpo', name: 'Training & Placement Cell (TPO)', code: 'TPO', section: 'Confidential Placement Cell', coordinator: state.currentUser.name, hod: 'Director IQAC (Admin)' }
     : (state.departments.find(d => d.id === state.currentUser.departmentId) || state.departments[0]);
@@ -820,14 +822,14 @@ function renderCoordinatorYearwiseWorkspace(container) {
                         </div>
                       </div>
                       <div style="font-size: 12px; font-weight: 600; color: #991B1B;">
-                        <i class="fas fa-info-circle"></i> Please review the reviewer's remarks above, re-upload the corrected response file(s), then click <strong>"Submit to HOD"</strong> to resubmit.
+                        <i class="fas fa-info-circle"></i> Please review the reviewer's remarks above, re-upload the corrected response file(s), then click <strong>"Submit to ${submitTargetLabel}"</strong> to resubmit.
                       </div>
                     </div>
                   </div>
                 </div>
               ` : ''}
 
-              <!-- 0B. Prominent Submission Banner (When Submitted to HOD / Approved) -->
+              <!-- 0B. Prominent Submission Banner (When Submitted / Approved) -->
               ${isSubmitted ? `
                 <div style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border: 2px solid #3B82F6; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);">
                   <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
@@ -837,16 +839,16 @@ function renderCoordinatorYearwiseWorkspace(container) {
                       </div>
                       <div>
                         <div style="font-size: 15px; font-weight: 900; color: #1E40AF; text-transform: uppercase; letter-spacing: 0.3px; display: flex; align-items: center; gap: 8px;">
-                          <span>✓ SUBMITTED TO HOD FOR SCRUTINY</span>
+                          <span>✓ SUBMITTED TO ${submitTargetLabel.toUpperCase()} FOR SCRUTINY</span>
                           <span style="background: #1E40AF; color: #FFF; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 12px;">SUBMITTED</span>
                         </div>
                         <div style="font-size: 12.5px; font-weight: 700; color: #1E3A8A; margin-top: 3px;">
-                          Submission Recorded on <strong>${fldRec.coordinatorSubmittedAt || 'Recently'}</strong> • Under Review by HOD <strong>(${dept.hod})</strong>
+                          Submission Recorded on <strong>${fldRec.coordinatorSubmittedAt || 'Recently'}</strong> • Under Review by ${(isHodUser || isTpoUser) ? '<strong>NAAC Coordinator (Director IQAC)</strong>' : `HOD <strong>(${dept.hod})</strong>`}
                         </div>
                       </div>
                     </div>
                     <div style="background: #FFFFFF; border: 1.5px solid #93C5FD; border-radius: 10px; padding: 7px 16px; font-size: 12px; font-weight: 800; color: #1E40AF; display: flex; align-items: center; gap: 6px;">
-                      <i class="fas fa-clock" style="color: #2563EB;"></i> Status: Submitted to HOD
+                      <i class="fas fa-clock" style="color: #2563EB;"></i> Status: Submitted to ${submitTargetLabel}
                     </div>
                   </div>
                 </div>
@@ -1092,13 +1094,13 @@ function renderCoordinatorYearwiseWorkspace(container) {
                   </button>
 
                   ${isSubmitted ? `
-                    <!-- ALREADY SUBMITTED TO HOD -->
+                    <!-- ALREADY SUBMITTED -->
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                       <div style="background: #EFF6FF; border: 2px solid #60A5FA; border-radius: 10px; padding: 10px 18px; display: inline-flex; align-items: center; gap: 10px; color: #1D4ED8; font-size: 13.5px; font-weight: 900; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);">
                         <i class="fas fa-check-circle" style="color: #2563EB; font-size: 18px;"></i>
-                        <span>✓ SUBMITTED TO HOD (${fldRec.coordinatorSubmittedAt || 'Recorded'})</span>
+                        <span>✓ SUBMITTED TO ${submitTargetLabel.toUpperCase()} (${fldRec.coordinatorSubmittedAt || 'Recorded'})</span>
                       </div>
-                      <button type="button" class="ios-btn" style="background: #FFFFFF; color: #1E293B; font-weight: 800; border: 1.5px solid #CBD5E1; padding: 10px 18px; font-size: 12.5px; border-radius: 9px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);" onclick="submitFolderToHOD('${fld.id}')" title="Click to update remarks or resubmit modified responses to HOD">
+                      <button type="button" class="ios-btn" style="background: #FFFFFF; color: #1E293B; font-weight: 800; border: 1.5px solid #CBD5E1; padding: 10px 18px; font-size: 12.5px; border-radius: 9px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);" onclick="submitFolderToHOD('${fld.id}')" title="Click to update remarks or resubmit modified responses to ${submitTargetLabel}">
                         <i class="fas fa-sync-alt" style="color: #2563EB;"></i>
                         <span>Re-Submit / Update</span>
                       </button>
@@ -1116,16 +1118,16 @@ function renderCoordinatorYearwiseWorkspace(container) {
                       <span>✓ VERIFIED BY IQAC CENTRAL DIRECTORATE</span>
                     </div>
                   ` : (prog.completed === 0 ? `
-                    <button type="button" class="ios-btn" style="background: #94A3B8; color: #FFF; padding: 10px 20px; font-size: 13px; font-weight: 800; border-radius: 9px; cursor: not-allowed;" onclick="showToast('Please upload at least one completed response file before submitting to HOD.', 'warning')">
-                      <i class="fas fa-paper-plane"></i> Submit to HOD (0 Files Uploaded)
+                    <button type="button" class="ios-btn" style="background: #94A3B8; color: #FFF; padding: 10px 20px; font-size: 13px; font-weight: 800; border-radius: 9px; cursor: not-allowed;" onclick="showToast('Please upload at least one completed response file before submitting to ${submitTargetLabel}.', 'warning')">
+                      <i class="fas fa-paper-plane"></i> Submit to ${submitTargetLabel} (0 Files Uploaded)
                     </button>
                   ` : (prog.isPartial ? `
-                    <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #D97706 0%, #B45309 100%); color: #FFF; padding: 10px 22px; font-size: 13px; font-weight: 800; border-radius: 9px; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35); display: inline-flex; align-items: center; gap: 6px;" onclick="submitFolderToHOD('${fld.id}')" title="Submit partial progress to HOD">
-                      <i class="fas fa-paper-plane"></i> Submit Partial Progress (${prog.completed}/${prog.total} Files) to HOD
+                    <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #D97706 0%, #B45309 100%); color: #FFF; padding: 10px 22px; font-size: 13px; font-weight: 800; border-radius: 9px; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35); display: inline-flex; align-items: center; gap: 6px;" onclick="submitFolderToHOD('${fld.id}')" title="Submit partial progress to ${submitTargetLabel}">
+                      <i class="fas fa-paper-plane"></i> Submit Partial Progress (${prog.completed}/${prog.total} Files) to ${submitTargetLabel}
                     </button>
                   ` : `
                     <button type="button" class="ios-btn" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); color: #FFF; padding: 10px 24px; font-size: 13.5px; font-weight: 900; border-radius: 9px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35); display: inline-flex; align-items: center; gap: 6px;" onclick="submitFolderToHOD('${fld.id}')">
-                      <i class="fas fa-paper-plane"></i> Submit Complete ${fld.title} (${prog.total}/${prog.total} Files) to HOD
+                      <i class="fas fa-paper-plane"></i> Submit Complete ${fld.title} (${prog.total}/${prog.total} Files) to ${submitTargetLabel}
                     </button>
                   `))))}
                 </div>
@@ -1450,6 +1452,7 @@ window.handleAdminDeleteResponseFile = async function(recId, filename, folderId,
 window.submitFolderToHOD = async function(folderId) {
   const deptId = window.getEffectiveUserDeptId();
   const year = state.selectedAcademicYear;
+  const targetLabel = (state.currentUser?.role === 'hod' || state.currentUser?.role === 'tpo') ? 'NAAC Coordinator' : 'HOD';
 
   const fld = (state.formatFolders || []).find(f => f.id === folderId);
   let rec = state.yearwiseRecords.find(r => 
@@ -1461,19 +1464,19 @@ window.submitFolderToHOD = async function(folderId) {
   const prog = window.getFolderProgress(fld, rec);
 
   if (prog.completed === 0) {
-    showToast('Please upload at least one completed response file in this folder before submitting to HOD.', 'warning');
+    showToast(`Please upload at least one completed response file in this folder before submitting to ${targetLabel}.`, 'warning');
     return;
   }
 
   if (prog.isPartial) {
-    const confirmed = confirm(`Notice: This folder has ${prog.total} official templates, but only ${prog.completed} response file(s) have been uploaded (${prog.pending} pending).\n\nDo you want to submit this partial progress to HOD now?`);
+    const confirmed = confirm(`Notice: This folder has ${prog.total} official templates, but only ${prog.completed} response file(s) have been uploaded (${prog.pending} pending).\n\nDo you want to submit this partial progress to ${targetLabel} now?`);
     if (!confirmed) return;
   }
 
-  const remarks = document.getElementById(`folder-remarks-${folderId}`)?.value || rec?.coordinatorRemarks || (prog.isPartial ? `Partially submitted (${prog.completed}/${prog.total} files).` : 'Submitted for HOD scrutiny.');
+  const remarks = document.getElementById(`folder-remarks-${folderId}`)?.value || rec?.coordinatorRemarks || (prog.isPartial ? `Partially submitted (${prog.completed}/${prog.total} files).` : `Submitted for ${targetLabel} scrutiny.`);
 
   try {
-    showToast('Submitting folder responses to HOD...', 'info');
+    showToast(`Submitting folder responses to ${targetLabel}...`, 'info');
 
     let recId = rec?.id || `yr-${deptId}-${year}-${folderId}`;
     if (!rec) {
