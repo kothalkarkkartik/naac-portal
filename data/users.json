@@ -1,5 +1,18 @@
 [
   {
+    "id": "usr-1795252470460",
+    "password": "43113200",
+    "role": "dept_coordinator",
+    "phone": "",
+    "departmentId": "dip-me",
+    "name": "kartik kothalkar",
+    "registeredAt": "2026-11-21 09:14",
+    "designation": "Accreditation Coordinator",
+    "syncedAt": "2026-11-21T09:14:30.460Z",
+    "email": "kothalkark14@gmail.com",
+    "username": "thekkartik"
+  },
+  {
     "id": "usr-admin",
     "role": "admin_coordinator",
     "phone": "+91 217 2500219",

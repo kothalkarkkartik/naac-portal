@@ -95,6 +95,27 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// ============================================================================
+// PORTAL ACCESS LOCKDOWN / SUSPENSION GATEWAY
+// ============================================================================
+const IS_PORTAL_SUSPENDED = true;
+
+app.use((req, res, next) => {
+  if (IS_PORTAL_SUSPENDED) {
+    if (req.path.startsWith('/api')) {
+      return res.status(402).json({
+        error: 'This portal is not free. Access suspended.',
+        status: 'payment_required',
+        message: 'This portal has been deactivated. Please contact the administrator / developer to restore access.'
+      });
+    }
+    if (req.method === 'GET' && !req.path.startsWith('/assets') && !req.path.endsWith('.png') && !req.path.endsWith('.ico') && !req.path.endsWith('.jpg') && !req.path.endsWith('.svg')) {
+      return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    }
+  }
+  next();
+});
+
 // Static files
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {

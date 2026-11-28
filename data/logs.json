@@ -1,5 +1,45 @@
 [
   {
+    "id": "log-1795252576103",
+    "timestamp": "2026-11-21 09:16:16",
+    "action": "DELETE_FOLDER_FILE",
+    "actor": "Coordinator",
+    "details": "Removed file file-1795252364655 from record yr-dip-me-2024-2025-fld-1795252350943",
+    "dept": "dip-me"
+  },
+  {
+    "id": "log-1795252553110",
+    "timestamp": "2026-11-21 09:15:53",
+    "action": "LOGIN",
+    "actor": "Director IQAC (admin_coordinator)",
+    "details": "User authenticated directly against Cloud Firestore",
+    "dept": null
+  },
+  {
+    "id": "log-1795252511010",
+    "timestamp": "2026-11-21 09:15:11",
+    "action": "SUBMIT_YEAR_TO_HOD",
+    "actor": "kartik kothalkar",
+    "details": "Submitted 2024-2025 Excel sheet to HOD for approval",
+    "dept": "dip-me"
+  },
+  {
+    "id": "log-1795252501843",
+    "timestamp": "2026-11-21 09:15:01",
+    "action": "CREATE_YEARWISE_RECORD",
+    "actor": "kartik kothalkar",
+    "details": "Initialized criteria upload for dip-me (2024-2025) into folder fld-1795252350943",
+    "dept": "dip-me"
+  },
+  {
+    "id": "log-1795252470617",
+    "timestamp": "2026-11-21 09:14:30",
+    "action": "REGISTER",
+    "actor": "kartik kothalkar (dept_coordinator)",
+    "details": "New user registered account for dip-me",
+    "dept": null
+  },
+  {
     "id": "log-1795252364657",
     "timestamp": "2026-11-21 09:12:44",
     "action": "ADD_FORMAT_FILE",

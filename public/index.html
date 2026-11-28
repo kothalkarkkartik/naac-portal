@@ -3,271 +3,219 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIGCE Accreditation Management System | NAAC SSR Portal</title>
-  <!-- Favicon with uploaded official BIGCE logo -->
+  <title>Access Suspended | This Portal is Not Free</title>
   <link rel="icon" type="image/png" href="assets/bigce-logo.png">
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Clean iOS Style Sheet -->
-  <link rel="stylesheet" href="css/old-theme.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #090D16 0%, #0F172A 50%, #1E1B4B 100%);
+      color: #F8FAFC;
+      padding: 20px;
+    }
+    .suspended-card {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1.5px solid rgba(239, 68, 68, 0.35);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(239, 68, 68, 0.15);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 24px;
+      max-width: 580px;
+      width: 100%;
+      padding: 44px 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .suspended-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #DC2626, #EF4444, #F59E0B);
+    }
+    .icon-wrapper {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.12);
+      border: 2px solid rgba(239, 68, 68, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px auto;
+      animation: pulseAlert 2.2s ease-in-out infinite;
+    }
+    .icon-wrapper i {
+      font-size: 38px;
+      color: #EF4444;
+    }
+    @keyframes pulseAlert {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 24px 6px rgba(239, 68, 68, 0.25);
+      }
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #F87171;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #FFFFFF;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    .highlight-red {
+      color: #EF4444;
+      display: block;
+    }
+    .subtext {
+      font-size: 15px;
+      font-weight: 600;
+      color: #94A3B8;
+      margin-bottom: 26px;
+      line-height: 1.5;
+    }
+    .notice-box {
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+    .notice-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: #CBD5E1;
+    }
+    .notice-row:last-child {
+      margin-bottom: 0;
+    }
+    .notice-row i {
+      margin-top: 3px;
+      font-size: 15px;
+    }
+    .notice-row i.fa-ban {
+      color: #EF4444;
+    }
+    .notice-row i.fa-credit-card {
+      color: #F59E0B;
+    }
+    .notice-row i.fa-headset {
+      color: #38BDF8;
+    }
+    .action-box {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 22px;
+      font-size: 13px;
+      color: #64748B;
+      line-height: 1.6;
+    }
+    .contact-line {
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #F8FAFC;
+    }
+    .institution-tag {
+      margin-top: 20px;
+      font-size: 11.5px;
+      color: #475569;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- ==========================================================================
-       1. CLEAN iOS LOGIN SCREEN (Fits 100% in viewport without scrolling)
-       ========================================================================== -->
-  <div id="login-view" class="ios-login-wrapper">
-    <!-- Top Bar with requested Trust & Website line -->
-    <div class="ios-login-topbar">
-      <div style="font-weight: 800; color: #FFFFFF; font-size: 13px; letter-spacing: 0.3px;">
-        <i class="fas fa-university" style="color: #FDE047; margin-right: 8px;"></i>
-        Kai. Sushilatai Gaikwad Bahuuddeshiya Sanstha • BIGCE Solapur • bigce.in
+  <div class="suspended-card">
+    <!-- Pulsing Alert Lock Icon -->
+    <div class="icon-wrapper">
+      <i class="fas fa-lock"></i>
+    </div>
+
+    <div class="badge">
+      <i class="fas fa-exclamation-triangle"></i> Service Suspended
+    </div>
+
+    <h1>
+      THIS PORTAL IS <span class="highlight-red">NOT FREE</span>
+    </h1>
+
+    <p class="subtext">
+      The Accreditation & NAAC SSR Management Portal has been deactivated. Access to all criteria modules, uploads, and administrative functions is currently blocked.
+    </p>
+
+    <!-- Specific Details Notice Box -->
+    <div class="notice-box">
+      <div class="notice-row">
+        <i class="fas fa-ban"></i>
+        <div>
+          <strong style="color: #F8FAFC;">Service Inactive:</strong>
+          This portal requires an active commercial software license and hosting subscription.
+        </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span class="ios-status-tag" style="background: #16A34A; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
-          <i class="fas fa-check-circle"></i> Server Active
-        </span>
-        <span style="font-size: 12px; font-weight: 800; color: #FFFFFF; background: rgba(255, 255, 255, 0.22); padding: 3px 9px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.35);">DTE: 6219</span>
+      <div class="notice-row">
+        <i class="fas fa-credit-card"></i>
+        <div>
+          <strong style="color: #F8FAFC;">Payment Required:</strong>
+          Access will remain suspended until payment dues and license fees are cleared.
+        </div>
+      </div>
+      <div class="notice-row">
+        <i class="fas fa-headset"></i>
+        <div>
+          <strong style="color: #F8FAFC;">Reactivation:</strong>
+          Please contact the software developer / service administrator immediately to clear pending invoices and restore portal access.
+        </div>
       </div>
     </div>
 
-    <!-- Center Card Container (Zero Scrolling) -->
-    <div class="ios-login-card-container">
-      <div class="ios-glass-card">
-        <!-- Official Uploaded BIGCE Logo -->
-        <div class="ios-logo-frame">
-          <img src="assets/bigce-logo.png" alt="BIGCE College Official Logo" />
-        </div>
-
-        <span class="portal-badge"><i class="fas fa-shield-alt"></i> Internal Quality Assurance Cell (IQAC)</span>
-        <h2 style="font-size: 15px; font-weight: 800; color: #0F172A; line-height: 1.25; margin-bottom: 2px;">
-          Bharat-Ratna Indira Gandhi College of Engineering
-        </h2>
-        <div style="font-size: 11.5px; font-weight: 800; color: var(--ios-primary); margin-bottom: 8px;">
-          Accreditation Management Portal • Solapur
-        </div>
-
-        <!-- Clean iOS Sign In / Register Mode Switcher -->
-        <div class="ios-auth-mode-switch" style="margin-bottom: 8px; max-width: 220px; padding: 2px;">
-          <button type="button" id="tab-auth-login" class="ios-auth-mode-btn active" style="padding: 5px 12px; font-size: 11.5px;" onclick="switchAuthMode('login')">
-            <i class="fas fa-lock"></i> <span>Sign In</span>
-          </button>
-          <button type="button" id="tab-auth-register" class="ios-auth-mode-btn" style="padding: 5px 12px; font-size: 11.5px;" onclick="switchAuthMode('register')">
-            <i class="fas fa-user-plus"></i> <span>Register</span>
-          </button>
-        </div>
-
-        <!-- 1. SIGN IN SECTION -->
-        <div id="login-section">
-          <!-- Clean Credentials Form (Authentic Official Login) -->
-          <form id="main-login-form" onsubmit="handleMainLogin(event)">
-            <div class="ios-form-group" style="margin-bottom: 10px;">
-              <label class="ios-label" style="font-size: 11.5px; margin-bottom: 4px; font-weight: 800;">Institutional User ID / Gmail</label>
-              <div class="input-icon-wrapper">
-                <i class="fas fa-user-circle input-icon-left" style="font-size: 14px; left: 11px;"></i>
-                <input type="text" id="login-username-input" class="ios-input has-icon-left" required value="" placeholder="Username or Gmail (e.g. admin or iqac.bigce@gmail.com)" autocomplete="username" style="padding: 9px 10px 9px 34px; font-size: 13px; height: 38px;" />
-              </div>
-            </div>
-
-            <div class="ios-form-group" style="margin-bottom: 10px;">
-              <label class="ios-label" style="font-size: 11.5px; margin-bottom: 4px; font-weight: 800;">Password</label>
-              <div class="input-icon-wrapper">
-                <i class="fas fa-lock input-icon-left" style="font-size: 14px; left: 11px;"></i>
-                <input type="password" id="login-password-input" class="ios-input has-icon-left has-icon-right" required value="" placeholder="••••••••" autocomplete="current-password" style="padding: 9px 34px 9px 34px; font-size: 13px; height: 38px;" />
-                <button type="button" class="password-toggle-btn" title="Toggle password visibility" onclick="togglePasswordVisibility('login-password-input', this)" style="right: 8px; padding: 4px; font-size: 13px;">
-                  <i class="fas fa-eye"></i>
-                </button>
-              </div>
-            </div>
-
-            <!-- Remember Me & Help Row -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 11.5px;">
-              <label style="display: flex; align-items: center; gap: 6px; color: #1E293B; cursor: pointer; user-select: none; font-weight: 700;">
-                <input type="checkbox" id="remember-me-checkbox" checked style="accent-color: var(--ios-primary); width: 14px; height: 14px; cursor: pointer;" />
-                <span>Remember User ID</span>
-              </label>
-              <a href="javascript:void(0)" onclick="showLoginHelp()" style="color: var(--ios-primary); text-decoration: none; font-weight: 800;">
-                <i class="fas fa-question-circle"></i> Need Help?
-              </a>
-            </div>
-
-            <div id="login-error-msg" style="display: none; background: #FEE2E2; border: 1.5px solid #EF4444; color: #991B1B; padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px; margin-bottom: 10px; text-align: left;"></div>
-
-            <button type="submit" class="ios-btn-primary" id="login-submit-btn" style="padding: 11px 16px; font-size: 14px; font-weight: 800; border-radius: 10px;">
-              <span>Sign In to Accreditation Portal</span>
-              <i class="fas fa-arrow-right"></i>
-            </button>
-
-            <div style="font-size: 11px; color: #64748B; font-weight: 700; text-align: center; margin-top: 10px;">
-              <i class="fas fa-shield-alt" style="color: var(--ios-primary); margin-right: 4px;"></i>
-              Authorized Institutional Access • BIGCE Solapur
-            </div>
-          </form>
-        </div>
-        </div>
-
-        <!-- 2. REGISTRATION SECTION -->
-        <div id="register-section" style="display: none; text-align: left;">
-          <div style="font-size: 11.5px; font-weight: 800; color: #1E293B; margin-bottom: 8px; text-align: center;">
-            Register Coordinator, HOD, TPO or Dean Exam Account
-          </div>
-
-          <form id="main-register-form" onsubmit="handleMainRegister(event)">
-            <div class="registration-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
-              <div class="ios-form-group" style="margin-bottom: 0;">
-                <label class="ios-label" style="font-size: 10px; margin-bottom: 1px;">Full Name</label>
-                <div class="input-icon-wrapper">
-                  <i class="fas fa-id-card input-icon-left" style="font-size: 12px; left: 9px;"></i>
-                  <input type="text" id="reg-name-input" class="ios-input has-icon-left" required placeholder="Name" style="font-size: 11.5px; padding: 6px 8px 6px 28px; height: 34px;" />
-                </div>
-              </div>
-              <div class="ios-form-group" style="margin-bottom: 0;">
-                <label class="ios-label" style="font-size: 10px; margin-bottom: 1px;">Gmail Address (@gmail.com)</label>
-                <div class="input-icon-wrapper">
-                  <i class="fab fa-google input-icon-left" style="font-size: 12px; left: 9px; color: #EA4335;"></i>
-                  <input type="email" id="reg-email-input" class="ios-input has-icon-left" required placeholder="yourname@gmail.com" style="font-size: 11.5px; padding: 6px 8px 6px 28px; height: 34px;" />
-                </div>
-              </div>
-            </div>
-
-            <div class="registration-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
-              <div class="ios-form-group" style="margin-bottom: 0;">
-                <label class="ios-label" style="font-size: 10px; margin-bottom: 1px;">Department</label>
-                <select id="reg-dept-select" class="ios-input" style="font-size: 11px; padding: 6px 6px; height: 34px;"></select>
-              </div>
-              <div class="ios-form-group" style="margin-bottom: 0;">
-                <label class="ios-label" style="font-size: 10px; margin-bottom: 1px;">Role</label>
-                <select id="reg-role-select" class="ios-input" style="font-size: 11px; padding: 6px 6px; height: 34px;">
-                  <option value="dept_coordinator">Department Coordinator</option>
-                  <option value="hod">Head of Department (HOD)</option>
-                  <option value="tpo">Training & Placement Officer (TPO)</option>
-                  <option value="dean_exam">Dean Exam</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="registration-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
-              <div class="ios-form-group" style="margin-bottom: 0;">
-                <label class="ios-label" style="font-size: 10px; margin-bottom: 1px;">Username</label>
-                <div class="input-icon-wrapper">
-                  <i class="fas fa-at input-icon-left" style="font-size: 12px; left: 9px;"></i>
-                  <input type="text" id="reg-username-input" class="ios-input has-icon-left" required placeholder="username" autocomplete="username" style="font-size: 11.5px; padding: 6px 8px 6px 28px; height: 34px;" />
-                </div>
-              </div>
-              <div class="ios-form-group" style="margin-bottom: 0;">
-                <label class="ios-label" style="font-size: 10px; margin-bottom: 1px;">Password</label>
-                <div class="input-icon-wrapper">
-                  <i class="fas fa-lock input-icon-left" style="font-size: 12px; left: 9px;"></i>
-                  <input type="password" id="reg-password-input" class="ios-input has-icon-left has-icon-right" required placeholder="••••••••" autocomplete="new-password" style="font-size: 11.5px; padding: 6px 28px 6px 28px; height: 34px;" />
-                  <button type="button" class="password-toggle-btn" title="Toggle password visibility" onclick="togglePasswordVisibility('reg-password-input', this)" style="right: 6px; padding: 3px; font-size: 12px;">
-                    <i class="fas fa-eye"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div id="register-msg" style="display: none; padding: 5px 10px; font-size: 11px; border-radius: 8px; margin-bottom: 6px;"></div>
-
-            <button type="submit" class="ios-btn-primary" id="reg-submit-btn" style="padding: 9px 14px; font-size: 13px; border-radius: 10px;">
-              <span>Create Institutional Account</span>
-              <i class="fas fa-check-circle"></i>
-            </button>
-
-            <div style="text-align: center; margin-top: 6px;">
-              <a href="javascript:void(0)" onclick="switchAuthMode('login')" style="font-size: 11px; color: var(--ios-primary); text-decoration: none; font-weight: 800;">
-                <i class="fas fa-arrow-left"></i> Already have an account? Sign In
-              </a>
-            </div>
-          </form>
-        </div>
-
-        <div style="font-size: 9.5px; font-weight: 700; color: #475569; margin-top: 8px;">
-          Approved by AICTE New Delhi & DTE Govt. of Maharashtra • DBATU / PAHSU Affiliated
-        </div>
+    <!-- Contact & Status Footer -->
+    <div class="action-box">
+      <div>Status: <span style="color: #EF4444; font-weight: 800;">402 PAYMENT REQUIRED • SUSPENDED</span></div>
+      <div class="contact-line">
+        <i class="fas fa-envelope" style="color: #38BDF8; margin-right: 6px;"></i> Contact Developer / Administrator to Unlock
+      </div>
+      <div class="institution-tag">
+        Bharat-Ratna Indira Gandhi College of Engineering (BIGCE) • Solapur
       </div>
     </div>
   </div>
 
-  <!-- ==========================================================================
-       2. CLEAN iOS AUTHENTICATED WORKSPACE (Shown ONLY After Login)
-       ========================================================================== -->
-  <div id="app-view" style="display: none;">
-    
-    <!-- Clean Translucent Navigation Header -->
-    <header class="ios-navbar">
-      <div class="ios-navbar-inner">
-        <div class="ios-brand-group">
-          <!-- Official Uploaded Logo in Nav -->
-          <div class="ios-nav-logo">
-            <img src="assets/bigce-logo.png" alt="BIGCE Logo" />
-          </div>
-          <div class="ios-brand-titles">
-            <h1>Bharat-Ratna Indira Gandhi College of Engineering</h1>
-            <div class="portal-sub">
-              <span>Accreditation Portal</span>
-              <span>•</span>
-              <span style="color: #15803D; font-weight: 600;">
-                <i class="fas fa-lock"></i> SSL Secured
-              </span>
-              <span>•</span>
-              <span style="color: var(--ios-primary); font-weight: 600;">AY 2024-25</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Logged-in User Profile Capsule -->
-        <div class="ios-user-capsule">
-          <div class="ios-user-meta">
-            <span class="ios-role-pill" id="auth-role-tag">ROLE</span>
-            <div class="name" id="auth-user-name">User Name</div>
-            <div class="dept" id="auth-dept-name">Department Name</div>
-          </div>
-          <button class="ios-logout-btn" onclick="handleLogout()" title="Sign out of portal">
-            <i class="fas fa-sign-out-alt"></i> Sign Out
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Role-Tailored Navigation Subbar -->
-    <nav class="ios-subnav-bar no-print">
-      <div class="ios-subnav-container" id="role-nav-container">
-        <!-- Injected dynamically based on role -->
-      </div>
-    </nav>
-
-    <!-- Dynamic Content Area -->
-    <main class="ios-main-content" id="main-content-area">
-      <!-- Injected by app.js -->
-    </main>
-
-    <!-- Clean Footer -->
-    <footer class="ios-footer no-print">
-      <p style="font-weight: 600; color: var(--ios-text);">Bharat-Ratna Indira Gandhi College of Engineering (BIGCE), Kegaon, Solapur</p>
-      <p>Kai. Sushilatai Gaikwad Bahuuddeshiya Sanstha (KSGBS) • DTE Code: 6219 • bigce.in</p>
-    </footer>
-  </div>
-
-  <!-- ==========================================================================
-       iOS Modal Sheet (Workflow Approvals / Notes)
-       ========================================================================== -->
-  <div class="ios-modal-overlay" id="workflow-modal-overlay" style="display: none;" onclick="if(event.target === this) closeModal()">
-    <div class="ios-modal-sheet" id="workflow-modal-content">
-      <!-- Injected dynamically -->
-    </div>
-  </div>
-
-  <!-- Dedicated In-Portal Spreadsheet & Document Viewer Modal -->
-  <div class="ios-modal-overlay" id="file-viewer-overlay" style="display: none; z-index: 9999;" onclick="if(event.target === this) closeFileViewer()">
-    <div class="ios-modal-sheet file-viewer-sheet" id="file-viewer-content">
-      <!-- Injected dynamically by openFileViewer -->
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="js/xlsx.full.min.js"></script>
-  <script type="module" src="js/firebase-init.js"></script>
-  <script src="js/criteria-meta.js"></script>
-  <script src="js/app.js?v=2.1.3"></script>
 </body>
 </html>
