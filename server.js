@@ -110,6 +110,9 @@ app.use((req, res, next) => {
       });
     }
     if (req.method === 'GET' && !req.path.startsWith('/assets') && !req.path.endsWith('.png') && !req.path.endsWith('.ico') && !req.path.endsWith('.jpg') && !req.path.endsWith('.svg')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       return res.sendFile(path.join(__dirname, 'public', 'index.html'));
     }
   }
